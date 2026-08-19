@@ -1,0 +1,29 @@
+{
+  "name": "near_margin_collision",
+  "timestamp": 1000.0,
+  "frame_id": "map",
+  "trajectory": [
+    {"step_id": 0, "x": 0, "y": 0, "yaw": 0},
+    {"step_id": 1, "x": 1, "y": 0, "yaw": 0},
+    {"step_id": 2, "x": 2, "y": 0, "yaw": 0},
+    {"step_id": 3, "x": 3, "y": 0, "yaw": 0},
+    {"step_id": 4, "x": 4, "y": 0, "yaw": 0},
+    {"step_id": 5, "x": 5, "y": 0, "yaw": 0},
+    {"step_id": 6, "x": 6, "y": 0, "yaw": 0},
+    {"step_id": 7, "x": 7, "y": 0, "yaw": 0},
+    {"step_id": 8, "x": 8, "y": 0, "yaw": 0},
+    {"step_id": 9, "x": 9, "y": 0, "yaw": 0},
+    {"step_id": 10, "x": 10, "y": 0, "yaw": 0}
+  ],
+  "tracked_objects": [
+    {
+      "track_id": "near-01",
+      "class_name": "debris",
+      "footprint_polygon_xy": [[4.8, 0.60], [5.2, 0.60], [5.2, 0.90], [4.8, 0.90]],
+      "confidence": 0.9
+    }
+  ],
+  "terrain_normal_xyz": [0, 0, 1],
+  "terrain_plane_id": "flat",
+  "expectations": {"collision_steps_min": 1, "minimum_distance_m": 0.15}
+}

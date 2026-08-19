@@ -1,0 +1,15 @@
+.venv/
+.cache/
+.pytest_cache/
+*.egg-info/
+__pycache__/
+*.py[cod]
+
+# Generated CLI artifacts. Remove this rule if validation evidence is committed.
+outputs/
+
+# ROS / colcon workspace artifacts
+ros2/build/
+ros2/install/
+ros2/log/
+.DS_Store

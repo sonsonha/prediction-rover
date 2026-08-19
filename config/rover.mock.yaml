@@ -1,0 +1,22 @@
+# TEST / MOCK VALUES ONLY — NOT VERIFIED LANDFILL ROVER PARAMETERS.
+# These estimates must be replaced by measured/CAD values before field use.
+rover:
+  mass_kg: 100.0
+
+  # Overall body / collision envelope.
+  body_length_m: 1.05
+  body_width_m: 0.90
+  body_height_m: 0.50
+
+  # Approximate ground-contact support area of the tracks.
+  support_length_m: 0.75
+  support_width_m: 0.88
+  ground_clearance_m: 0.15
+
+  # CoM is centered in XY for the V1 static baseline.
+  com_x_m: 0.0
+  com_y_m: 0.0
+  com_height_m: 0.33
+
+prediction:
+  collision_margin_m: 0.20

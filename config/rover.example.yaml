@@ -1,0 +1,23 @@
+# TEMPLATE ONLY. Replace every placeholder with measured and verified rover values.
+rover:
+  mass_kg: 0.0
+
+  # Overall collision envelope.
+  body_length_m: 0.0
+  body_width_m: 0.0
+  body_height_m: 0.0
+
+  # Ground-contact support polygon; do not substitute body dimensions.
+  support_length_m: 0.0
+  support_width_m: 0.0
+  ground_clearance_m: 0.0
+
+  # Center of Mass (CoM; equivalent to CoG under uniform gravity).
+  # Coordinates are relative to support-polygon center: +X forward, +Y left.
+  com_x_m: 0.0
+  com_y_m: 0.0
+  com_height_m: 0.0
+
+prediction:
+  collision_margin_m: 0.20
+

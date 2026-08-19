@@ -1,0 +1,2 @@
+"""Deterministic mock scenario support."""
+
