@@ -375,6 +375,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional path to write full prediction JSON",
     )
     parser.add_argument(
+        "--viz-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Optional directory for demo artifacts: prediction_output.json, "
+            "run_summary.txt, rollover_profile.png, collision_topdown.png"
+        ),
+    )
+    parser.add_argument(
         "--expected-frame-id",
         default="map",
         help="Expected frame_id for all inputs",
@@ -495,6 +504,35 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.output is not None:
         write_json(args.output, payload)
         LOGGER.info("wrote %s", args.output)
+    if args.viz_dir is not None:
+        snapshot = runtime.snapshot()
+        if (
+            snapshot.trajectory is None
+            or snapshot.objects is None
+            or snapshot.geometry is None
+        ):
+            LOGGER.warning(
+                "viz-dir requested but cache is missing trajectory/objects/geometry; skipped"
+            )
+        else:
+            from visualization.export_demo import export_prediction_artifacts
+
+            paths = export_prediction_artifacts(
+                output_dir=args.viz_dir,
+                prediction=last_output,
+                trajectory=snapshot.trajectory,
+                tracked_objects=list(snapshot.objects),
+                geometry=list(snapshot.geometry),
+                config=config,
+                profile=profile.value,
+                scenario_name=scenario_path.stem,
+                cycle_id=cycle_id,
+            )
+            LOGGER.info("wrote visualization artifacts under %s", args.viz_dir)
+            if not args.json_only:
+                print(f"\nArtifacts written to: {args.viz_dir}")
+                for key, path in paths.items():
+                    print(f"  {key}: {path}")
     return 0
 
 

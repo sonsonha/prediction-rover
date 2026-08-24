@@ -25,21 +25,26 @@ python3 -m venv .venv
 ## Run the canonical Python demo
 
 ```bash
+# Easy: Makefile targets (recommended)
+make demo-viz          # all demos → outputs/runtime_demos/<name>/{*.png,*.json,*.txt}
+make demo-flat         # flat static + plots
+make demo-dynamic      # dynamic-profile demos + plots
+make runtime SCENARIO=mock/runtime_scenarios/demo_side_slope_15deg.json PROFILE=static
+
+# Or call the CLI directly
 .venv/bin/python -m prediction_core.replay \
   --profile static \
   --config config/rover.mock.yaml \
-  --scenario mock/runtime_scenarios/demo_flat_static.json
-
-.venv/bin/python -m prediction_core.replay \
-  --profile dynamic \
-  --config config/rover.mock.yaml \
-  --scenario mock/runtime_scenarios/demo_dynamic_waits_for_state.json
-
-.venv/bin/python -m prediction_core.replay \
-  --profile dynamic \
-  --config config/rover.mock.yaml \
-  --scenario mock/runtime_scenarios/demo_dynamic_zero_acceleration.json
+  --scenario mock/runtime_scenarios/demo_flat_static.json \
+  --viz-dir outputs/runtime_demos/demo_flat_static
 ```
+
+Each `--viz-dir` / `make demo-*` folder contains:
+
+- `rollover_profile.png` — attitude, SSM, Stability Moment, support snapshot
+- `collision_topdown.png` — trajectory + footprints
+- `prediction_output.json` — full evidence
+- `run_summary.txt` — short readable snapshot
 
 Default `--profile` is **static** (backward compatible).
 
@@ -49,7 +54,8 @@ Dynamic additionally requires `RoverState` with valid `acceleration_xyz`
 still runs at most once per trajectory cycle.
 
 Other demos: `demo_side_slope_15deg`, `demo_dynamic_lateral_acceleration`,
-`demo_external_force_height`, `demo_missing_acceleration` under
+`demo_external_force_height`, `demo_missing_acceleration`,
+`demo_dynamic_waits_for_state`, `demo_dynamic_zero_acceleration` under
 `mock/runtime_scenarios/`.
 Algorithm regression mocks with plots:
 
@@ -115,5 +121,6 @@ Effective SSM ≈ Point-mass ZMP under gravity + translational accel with empty 
 - Mock physical parameters
 - ROS not validated in this phase
 
-**Next step (not this package):** validate with upstream data, then expose selected
-evidence through ROS messages.
+**Next step:** on a ROS 2 host, build `safety_perception_msgs` + `prediction_ros`,
+launch with `prediction_profile:=static|dynamic`, and validate with mock upstream
+or real bags. See [`documents/ROS_UPSTREAM_INTERFACE_CONTRACT.md`](documents/ROS_UPSTREAM_INTERFACE_CONTRACT.md).

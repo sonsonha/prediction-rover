@@ -1,4 +1,4 @@
-"""Roll, pitch, and SSM profile visualization without decision thresholds."""
+"""Roll, pitch, SSM, and dynamic-moment visualization (no decision thresholds)."""
 
 from __future__ import annotations
 
@@ -11,8 +11,7 @@ import matplotlib.pyplot as plt
 
 from prediction_core.config import RoverConfig
 from prediction_core.geometry_utils import projected_com_on_support_xy
-from prediction_core.models import GeometryStep
-from prediction_core.models import PredictionOutput, Trajectory
+from prediction_core.models import GeometryStep, PredictionOutput, Trajectory
 
 
 def save_rollover_profile(
@@ -22,6 +21,7 @@ def save_rollover_profile(
     *,
     config: RoverConfig | None = None,
     geometry: list[GeometryStep] | None = None,
+    title: str | None = None,
 ) -> None:
     destination = Path(path)
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -35,37 +35,88 @@ def save_rollover_profile(
     normalized_margins = [
         step.normalized_static_stability_margin for step in output.rollover_steps
     ]
+    moments = []
+    norm_moments = []
+    for step in output.rollover_steps:
+        dyn = step.dynamic_stability
+        if dyn is not None and dyn.valid and dyn.minimum_stability_moment_nm is not None:
+            moments.append(dyn.minimum_stability_moment_nm)
+            norm_moments.append(dyn.normalized_minimum_stability_moment)
+        else:
+            moments.append(float("nan"))
+            norm_moments.append(float("nan"))
 
-    figure = plt.figure(figsize=(12, 9))
-    grid = figure.add_gridspec(3, 2, width_ratios=(1.3, 1))
+    figure = plt.figure(figsize=(12, 11))
+    grid = figure.add_gridspec(4, 2, width_ratios=(1.35, 1), height_ratios=(1, 1, 1, 1))
     attitude_axes = figure.add_subplot(grid[0, 0])
     raw_margin_axes = figure.add_subplot(grid[1, 0], sharex=attitude_axes)
     normalized_margin_axes = figure.add_subplot(grid[2, 0], sharex=attitude_axes)
+    moment_axes = figure.add_subplot(grid[3, 0], sharex=attitude_axes)
     support_axes = figure.add_subplot(grid[:, 1])
+
     attitude_axes.plot(distances, roll, marker="o", label="roll (deg)")
     attitude_axes.plot(distances, pitch, marker="o", label="pitch (deg)")
-    attitude_axes.set_ylabel("Predicted attitude (deg)")
+    attitude_axes.set_ylabel("Attitude (deg)")
     attitude_axes.grid(True, alpha=0.25)
     attitude_axes.legend(loc="best")
+    attitude_axes.set_title("PRIMARY BASELINE — terrain attitude")
+
     raw_margin_axes.plot(
-        distances, margins, color="tab:green", marker="o", label="raw SSM (m)"
+        distances, margins, color="tab:green", marker="o", label="raw static SSM (m)"
     )
+    raw_margin_axes.axhline(0.0, color="0.5", linewidth=0.8, linestyle="--")
     raw_margin_axes.set_ylabel("Raw SSM (m)")
     raw_margin_axes.grid(True, alpha=0.25)
     raw_margin_axes.legend(loc="best")
+    raw_margin_axes.set_title("PRIMARY BASELINE — static SSM")
+
     normalized_margin_axes.plot(
         distances,
         normalized_margins,
         color="tab:purple",
         marker="o",
-        label="normalized SSM",
+        label="normalized static SSM",
     )
-    normalized_margin_axes.set_xlabel("Distance along route (m)")
+    normalized_margin_axes.axhline(1.0, color="0.5", linewidth=0.8, linestyle=":")
+    normalized_margin_axes.axhline(0.0, color="0.5", linewidth=0.8, linestyle="--")
     normalized_margin_axes.set_ylabel("Normalized SSM")
     normalized_margin_axes.grid(True, alpha=0.25)
     normalized_margin_axes.legend(loc="best")
+    normalized_margin_axes.set_title("PRIMARY BASELINE — normalized static SSM")
+
+    moment_axes.plot(
+        distances,
+        moments,
+        color="tab:red",
+        marker="o",
+        label="stability moment (N·m)",
+    )
+    moment_axes.set_ylabel("Moment (N·m)", color="tab:red")
+    moment_axes.tick_params(axis="y", labelcolor="tab:red")
+    moment_axes.set_xlabel("Distance along route (m)")
+    moment_axes.grid(True, alpha=0.25)
+    moment_axes.set_title("PRIMARY DYNAMIC — Stability Moment")
+    norm_ax = moment_axes.twinx()
+    norm_ax.plot(
+        distances,
+        norm_moments,
+        color="tab:orange",
+        marker="s",
+        linestyle="--",
+        label="normalized moment",
+    )
+    norm_ax.axhline(1.0, color="tab:orange", linewidth=0.7, alpha=0.5, linestyle=":")
+    norm_ax.set_ylabel("Normalized moment", color="tab:orange")
+    norm_ax.tick_params(axis="y", labelcolor="tab:orange")
+    lines_a, labels_a = moment_axes.get_legend_handles_labels()
+    lines_b, labels_b = norm_ax.get_legend_handles_labels()
+    moment_axes.legend(lines_a + lines_b, labels_a + labels_b, loc="best")
+
     _draw_support_topdown(support_axes, trajectory, output, config, geometry)
-    figure.suptitle("Quasi-static rollover evidence (no decision threshold)")
+    figure.suptitle(
+        title or "Prediction V1 rollover evidence (no decision threshold)",
+        fontsize=12,
+    )
     figure.tight_layout()
     figure.savefig(destination, dpi=150)
     plt.close(figure)
@@ -159,19 +210,29 @@ def _draw_support_topdown(
         lines.append(
             f"critical tip {first.critical_tip.minimum_deg:.1f}° ({first.critical_tip.critical_edge})"
         )
-    dynamic = first.dynamic_stability
     if dynamic is not None and dynamic.valid:
+        if dynamic.minimum_stability_moment_nm is not None:
+            lines.append(f"min moment {dynamic.minimum_stability_moment_nm:.1f} N·m")
+        if dynamic.normalized_minimum_stability_moment is not None:
+            lines.append(
+                f"norm moment {dynamic.normalized_minimum_stability_moment:.3f}"
+                f" ({dynamic.minimum_normalized_moment_edge or dynamic.critical_edge})"
+            )
         if dynamic.effective_ssm_m is not None:
             lines.append(f"effective SSM {dynamic.effective_ssm_m:.3f} m")
         if dynamic.zmp_margin_m is not None:
             lines.append(f"ZMP margin {dynamic.zmp_margin_m:.3f} m")
-        if dynamic.minimum_stability_moment_nm is not None:
-            lines.append(f"min moment {dynamic.minimum_stability_moment_nm:.1f} N·m")
+        lines.append(
+            f"accel {'ok' if dynamic.acceleration_available else 'n/a'}; "
+            f"wrench {'in' if dynamic.external_wrench_included else ('n/a' if not dynamic.external_wrench_available else 'empty')}"
+        )
     axes.annotate(
         "\n".join(lines),
         xy=(0.03, 0.97),
         xycoords="axes fraction",
         va="top",
+        fontsize=8,
+        family="monospace",
+        bbox={"boxstyle": "round", "facecolor": "white", "alpha": 0.85, "edgecolor": "0.8"},
     )
-    axes.legend(loc="best")
-
+    axes.legend(loc="lower right", fontsize=8)

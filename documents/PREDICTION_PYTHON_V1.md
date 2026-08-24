@@ -224,11 +224,18 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[test]'
 .venv/bin/python -m pytest -q
 
+# Easy Makefile demos (PNG + JSON under outputs/runtime_demos/)
+make demo-viz
+make demo-flat
+make demo-dynamic
+make runtime SCENARIO=mock/runtime_scenarios/demo_side_slope_15deg.json PROFILE=static
+
 # Canonical V1 CLI (default profile: static)
 .venv/bin/python -m prediction_core.replay \
   --profile static \
   --config config/rover.mock.yaml \
-  --scenario mock/runtime_scenarios/demo_flat_static.json
+  --scenario mock/runtime_scenarios/demo_flat_static.json \
+  --viz-dir outputs/runtime_demos/demo_flat_static
 
 .venv/bin/python -m prediction_core.replay \
   --profile dynamic \
@@ -262,7 +269,13 @@ Full JSON via `--output` contains nested `critical_tip` and `dynamic_stability`.
 
 ## 14. Future ROS integration
 
-Validate Python V1 with upstream-provided data, then expose the selected stable
-evidence through ROS messages and perform ROS/rosbag integration.
+ROS is a **transport/adapter** around frozen `PredictionRuntime` + `PredictionCore`.
 
-Do not expand ROS `.msg` files until that validation step.
+- Parameter `prediction_profile`: `static` | `dynamic`
+- Adapters map `RoverState.acceleration.linear.{x,y,z}` → `acceleration_xyz`
+- External wrench `None` ≠ `[]` preserved across the ROS boundary
+- Output: baseline SSM + `StabilityMomentEvidence` + diagnostic `ZmpEvidence`
+
+See [`ROS_UPSTREAM_INTERFACE_CONTRACT.md`](ROS_UPSTREAM_INTERFACE_CONTRACT.md).
+
+Do not expand Decision semantics into ROS messages.

@@ -88,6 +88,9 @@ class PredictionRuntime:
         profile: PredictionProfile | str = PredictionProfile.STATIC,
         expected_frame_id: str = "map",
         require_full_geometry_coverage: bool = False,
+        max_object_age_sec: float | None = None,
+        max_geometry_age_sec: float | None = None,
+        max_state_age_sec: float | None = None,
         logger: Callable[[str], None] | None = None,
     ) -> None:
         self._logger = logger or (lambda message: None)
@@ -98,6 +101,9 @@ class PredictionRuntime:
             ValidationConfig(
                 expected_frame_id=expected_frame_id,
                 require_full_geometry_coverage=require_full_geometry_coverage,
+                max_object_age_sec=max_object_age_sec,
+                max_geometry_age_sec=max_geometry_age_sec,
+                max_state_age_sec=max_state_age_sec,
                 profile=self.profile,
             )
         )

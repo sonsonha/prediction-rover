@@ -20,6 +20,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ExternalWrenchArray.msg"
   "msg/CollisionObject.msg"
   "msg/CollisionStep.msg"
+  "msg/StabilityMomentEvidence.msg"
+  "msg/ZmpEvidence.msg"
   "msg/RolloverStep.msg"
   "msg/PredictionOutput.msg"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs

@@ -11,13 +11,27 @@ def generate_launch_description() -> LaunchDescription:
     config = Path(get_package_share_directory("prediction_ros")) / "config" / "prediction.yaml"
     return LaunchDescription(
         [
-            DeclareLaunchArgument("config_path", description="Absolute path to rover YAML config"),
+            DeclareLaunchArgument(
+                "config_path",
+                description="Absolute path to rover YAML config (e.g. .../config/rover.mock.yaml)",
+            ),
+            DeclareLaunchArgument(
+                "prediction_profile",
+                default_value="static",
+                description="Runtime readiness profile: static | dynamic",
+            ),
             Node(
                 package="prediction_ros",
                 executable="prediction_node",
                 name="prediction_node",
                 output="screen",
-                parameters=[str(config), {"config_path": LaunchConfiguration("config_path")}],
-            )
+                parameters=[
+                    str(config),
+                    {
+                        "config_path": LaunchConfiguration("config_path"),
+                        "prediction_profile": LaunchConfiguration("prediction_profile"),
+                    },
+                ],
+            ),
         ]
     )

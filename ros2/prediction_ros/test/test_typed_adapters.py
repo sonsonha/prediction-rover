@@ -36,6 +36,7 @@ def test_invalid_acceleration_maps_to_none_not_zero() -> None:
     )
     state = RosAdapters.state_from_ros(message)
     assert state.acceleration_xy is None
+    assert state.acceleration_xyz is None
     assert state.velocity_xy is None
     assert state.angular_velocity_xyz is None
 
@@ -67,6 +68,12 @@ def test_prediction_output_maps_to_typed_message() -> None:
     class RolloverStepMessage:
         pass
 
+    class StabilityMoment:
+        pass
+
+    class Zmp:
+        pass
+
     output = PredictionOutput(
         timestamp=10.0,
         source_trajectory_stamp=10.0,
@@ -82,7 +89,11 @@ def test_prediction_output_maps_to_typed_message() -> None:
         collision_step_type=CollisionStep,
         collision_object_type=CollisionObject,
         rollover_step_type=RolloverStepMessage,
+        stability_moment_type=StabilityMoment,
+        zmp_type=Zmp,
     )
     assert message.source_trajectory_id == 7
     assert message.rollover_steps[0].normalized_static_stability_margin == 0.8
     assert message.rollover_steps[0].confidence_valid is False
+    assert message.rollover_steps[0].stability_moment.valid is False
+    assert message.rollover_steps[0].zmp.valid is False
