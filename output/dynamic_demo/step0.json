@@ -1,0 +1,59 @@
+{
+  "step_id": 0,
+  "predicted_roll_deg": -0.0,
+  "predicted_pitch_deg": -0.0,
+  "static_stability_margin_m": 0.375,
+  "normalized_static_stability_margin": 1.0,
+  "terrain_id": "flat",
+  "confidence_or_validity": 1.0,
+  "critical_tip": {
+    "front_deg": 48.65222278030633,
+    "rear_deg": 48.65222278030633,
+    "left_deg": 53.13010235415598,
+    "right_deg": 53.13010235415598,
+    "minimum_deg": 48.65222278030633,
+    "critical_edge": "front"
+  },
+  "dynamic_stability": {
+    "acceleration_available": true,
+    "external_wrench_available": true,
+    "external_wrench_included": true,
+    "effective_force_xyz_n": [
+      0.0,
+      -150.0,
+      -980.665
+    ],
+    "effective_gravity_projection_xy": [
+      0.0,
+      -0.05047595254240745
+    ],
+    "effective_ssm_m": 0.375,
+    "normalized_effective_ssm": 0.8852819260399831,
+    "zmp_xy": [
+      0.0,
+      -0.05047595254240745
+    ],
+    "zmp_margin_m": 0.375,
+    "normalized_zmp_margin": 0.8852819260399831,
+    "edge_stability_moments_nm": {
+      "front": 367.749375,
+      "rear": 367.749375,
+      "left": 480.9926,
+      "right": 381.9926
+    },
+    "minimum_stability_moment_nm": 381.9926,
+    "normalized_minimum_stability_moment": 0.885281926039983,
+    "critical_edge": "right",
+    "valid": true,
+    "validity_reason": "dynamic evidence computed from acceleration and wrench semantics",
+    "assumptions": [
+      "map/ENU frame with g_world=(0,0,-9.80665) m/s^2",
+      "acceleration_xyz is kinematic CoM acceleration excluding gravity",
+      "angular_velocity_xyz is not consumed (no inertia tensor configured)",
+      "stability moment and ZMP omit rotational inertia (-I alpha, -w x Iw)",
+      "ZMP is point-mass/translational, not full rigid-body ZMP",
+      "canonical FASM and LTR are not implemented",
+      "external_wrenches explicitly supplied (count=0; [] means known-empty)"
+    ]
+  }
+}

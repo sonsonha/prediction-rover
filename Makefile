@@ -2,6 +2,7 @@
 #
 # Usage (from this directory):
 #   make test
+#   make demo
 #   make mocks
 #   make scenario FILE=mock/scenarios/side_slope_15deg.json
 #   make install
@@ -11,12 +12,13 @@ CONFIG  := config/rover.mock.yaml
 OUTDIR  := outputs/mock_validation
 CACHE   := MPLCONFIGDIR=.cache/matplotlib XDG_CACHE_HOME=.cache
 
-.PHONY: help install test ros-test ros-build mocks scenario
+.PHONY: help install test ros-test ros-build mocks scenario demo
 
 help:
 	@echo "Targets:"
 	@echo "  make install   # create .venv and install package + pytest"
 	@echo "  make test      # run core + ROS wrapper pytest"
+	@echo "  make demo      # run canonical Prediction Python V1 replay demos"
 	@echo "  make ros-test  # run ROS wrapper pytest only"
 	@echo "  make ros-build # build safety_perception_msgs + prediction_ros with colcon"
 	@echo "  make mocks     # run all mock scenarios"
@@ -28,6 +30,14 @@ install:
 
 test:
 	$(PY) -m pytest -q
+
+demo:
+	$(PY) -m prediction_core.replay --version
+	$(PY) -m prediction_core.replay --config $(CONFIG) --scenario mock/runtime_scenarios/demo_flat_static.json --quiet
+	$(PY) -m prediction_core.replay --config $(CONFIG) --scenario mock/runtime_scenarios/demo_side_slope_15deg.json --quiet
+	$(PY) -m prediction_core.replay --config $(CONFIG) --scenario mock/runtime_scenarios/demo_dynamic_lateral_acceleration.json --quiet
+	$(PY) -m prediction_core.replay --config $(CONFIG) --scenario mock/runtime_scenarios/demo_external_force_height.json --quiet
+	$(PY) -m prediction_core.replay --config $(CONFIG) --scenario mock/runtime_scenarios/demo_missing_acceleration.json --quiet
 
 ros-test:
 	$(PY) -m pytest ros2/prediction_ros/test -q

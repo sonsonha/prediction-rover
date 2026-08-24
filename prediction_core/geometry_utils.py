@@ -27,6 +27,16 @@ class StabilityMargins:
     def minimum_m(self) -> float:
         return min(self.front_m, self.rear_m, self.left_m, self.right_m)
 
+    def limiting_edge(self) -> str:
+        """Edge with the smallest signed raw margin (nearest support edge)."""
+        values = {
+            "front": self.front_m,
+            "rear": self.rear_m,
+            "left": self.left_m,
+            "right": self.right_m,
+        }
+        return min(values, key=values.get)
+
 
 def rover_rectangle(
     step: TrajectoryStep, length_m: float, width_m: float, expansion_m: float = 0.0
@@ -106,6 +116,36 @@ def terrain_frame(normal_xyz: Vector3, yaw: float) -> NDArray[np.float64]:
     return np.column_stack((forward, left, normal))
 
 
+def project_point_on_support_along_direction_xy(
+    normal_xyz: Vector3,
+    yaw: float,
+    point_xyz: Vector3,
+    direction_world_xyz: Vector3,
+    *,
+    min_normal_component: float = 1e-9,
+) -> tuple[float, float] | None:
+    """Project a point onto the support plane along an arbitrary world direction.
+
+    Coordinates of the returned point are in the terrain-aligned rover frame
+    (support plane ``z = 0``). Returns ``None`` when ``direction`` is nearly
+    parallel to the support plane (no stable intersection).
+    """
+    rotation_rover_to_world = terrain_frame(normal_xyz, yaw)
+    direction_world = np.asarray(direction_world_xyz, dtype=float)
+    if not np.all(np.isfinite(direction_world)):
+        raise ValueError("projection direction must contain only finite values")
+    if float(np.linalg.norm(direction_world)) <= 1e-12:
+        return None
+    direction_rover = rotation_rover_to_world.T @ direction_world
+    normal_component = float(direction_rover[2])
+    if abs(normal_component) <= min_normal_component:
+        return None
+    point = np.asarray(point_xyz, dtype=float)
+    parameter = -float(point[2]) / normal_component
+    projected = point + parameter * direction_rover
+    return float(projected[0]), float(projected[1])
+
+
 def projected_com_on_support_xy(
     normal_xyz: Vector3,
     yaw: float,
@@ -119,15 +159,15 @@ def projected_com_on_support_xy(
     support plane is z=0. This is a vector line-plane intersection, not an
     attitude-specific shortcut.
     """
-    rotation_rover_to_world = terrain_frame(normal_xyz, yaw)
-    gravity_world = np.array([0.0, 0.0, -1.0])
-    gravity_rover = rotation_rover_to_world.T @ gravity_world
-    if gravity_rover[2] >= -1e-12:
+    projected = project_point_on_support_along_direction_xy(
+        normal_xyz,
+        yaw,
+        (com_x_m, com_y_m, com_height_m),
+        (0.0, 0.0, -1.0),
+    )
+    if projected is None:
         raise ValueError("gravity does not intersect the rover support plane")
-    com = np.array([com_x_m, com_y_m, com_height_m], dtype=float)
-    parameter = -com[2] / gravity_rover[2]
-    projected = com + parameter * gravity_rover
-    return float(projected[0]), float(projected[1])
+    return projected
 
 
 def signed_distance_to_support_rectangle(

@@ -1,0 +1,37 @@
+{
+  "name": "cycle_waiting",
+  "events": [
+    {
+      "type": "trajectory",
+      "trajectory_id": 7,
+      "timestamp": 50.0,
+      "frame_id": "map",
+      "steps": [
+        {
+          "step_id": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 1,
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 2,
+          "x": 2.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      ]
+    },
+    {
+      "type": "objects",
+      "timestamp": 50.01,
+      "frame_id": "map",
+      "objects": []
+    }
+  ]
+}

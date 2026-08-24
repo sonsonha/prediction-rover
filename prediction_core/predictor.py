@@ -7,7 +7,14 @@ import time
 
 from .collision import CollisionPredictor
 from .config import RoverConfig
-from .models import GeometryStep, PredictionOutput, RoverState, TrackedObject, Trajectory
+from .models import (
+    ExternalWrench,
+    GeometryStep,
+    PredictionOutput,
+    RoverState,
+    TrackedObject,
+    Trajectory,
+)
 from .rollover import RolloverPredictor
 
 
@@ -25,14 +32,24 @@ class PredictionCore:
         tracked_objects: list[TrackedObject],
         geometry: list[GeometryStep],
         state: RoverState | None = None,
+        external_wrenches: list[ExternalWrench] | None = None,
     ) -> PredictionOutput:
-        """Produce safety evidence; V1 intentionally does not consume state."""
-        del state
+        """Produce safety evidence.
+
+        ``external_wrenches=None`` means wrench data was not supplied.
+        ``external_wrenches=[]`` means an explicit empty wrench set.
+        Static collision/rollover baselines still run when dynamic inputs are absent.
+        """
         return PredictionOutput(
             timestamp=time.time(),
             source_trajectory_stamp=trajectory.timestamp,
             collision_steps=self.collision_predictor.predict(trajectory, tracked_objects),
-            rollover_steps=self.rollover_predictor.predict(trajectory, geometry),
+            rollover_steps=self.rollover_predictor.predict(
+                trajectory,
+                geometry,
+                state=state,
+                external_wrenches=external_wrenches,
+            ),
         )
 
     @staticmethod

@@ -1,0 +1,76 @@
+{
+  "name": "wrong_geometry_cycle",
+  "events": [
+    {
+      "type": "trajectory",
+      "trajectory_id": 42,
+      "timestamp": 100.0,
+      "frame_id": "map",
+      "steps": [
+        {
+          "step_id": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 1,
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 2,
+          "x": 2.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      ]
+    },
+    {
+      "type": "objects",
+      "timestamp": 100.01,
+      "frame_id": "map",
+      "objects": []
+    },
+    {
+      "type": "geometry",
+      "source_trajectory_id": 41,
+      "timestamp": 100.02,
+      "frame_id": "map",
+      "source_trajectory_stamp": 100.0,
+      "steps": [
+        {
+          "step_id": 0,
+          "plane_id": "wrong-cycle",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 1,
+          "plane_id": "wrong-cycle",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 2,
+          "plane_id": "wrong-cycle",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        }
+      ]
+    }
+  ]
+}

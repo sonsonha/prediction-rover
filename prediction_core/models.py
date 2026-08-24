@@ -113,6 +113,25 @@ class GeometryStep:
 
 @dataclass(frozen=True)
 class RoverState:
+    """Kinematic rover sample in the common ``map`` frame.
+
+    Acceleration semantics
+    ----------------------
+    ``acceleration_xyz`` is the kinematic CoM acceleration in ``map`` (m/s²)
+    **without gravity**. A stationary rover reports ``(0, 0, 0)``. Gravity is
+    introduced separately by Prediction as ``g_world = (0, 0, -9.80665)``.
+
+    Do **not** feed raw accelerometer specific-force into ``acceleration_xyz``.
+
+    ``acceleration_xyz is None`` means acceleration is unavailable. That is
+    distinct from a valid zero acceleration ``(0, 0, 0)``. Dynamic metrics that
+    require acceleration must be marked unavailable when the value is ``None``;
+    they must never silently substitute zero.
+
+    ``acceleration_xy`` is retained for compatibility and is **not** promoted to
+    a 3-D acceleration (missing ``az`` would invent data).
+    """
+
     timestamp: float
     x: float | None = None
     y: float | None = None
@@ -122,15 +141,61 @@ class RoverState:
     velocity_xy: Vector2 | None = None
     acceleration_xy: Vector2 | None = None
     angular_velocity_xyz: Vector3 | None = None
+    velocity_xyz: Vector3 | None = None
+    acceleration_xyz: Vector3 | None = None
+    angular_acceleration_xyz: Vector3 | None = None
 
     def __post_init__(self) -> None:
         _require_finite("rover state timestamp", self.timestamp)
         for name in ("x", "y", "yaw", "roll", "pitch"):
             _require_optional_finite(f"rover state {name}", getattr(self, name))
-        for name in ("velocity_xy", "acceleration_xy", "angular_velocity_xyz"):
+        for name in (
+            "velocity_xy",
+            "acceleration_xy",
+            "angular_velocity_xyz",
+            "velocity_xyz",
+            "acceleration_xyz",
+            "angular_acceleration_xyz",
+        ):
             value = getattr(self, name)
             if value is not None:
                 _require_finite(f"rover state {name}", *value)
+
+    def resolved_acceleration_xyz(self) -> Vector3 | None:
+        """Return authoritative 3-D kinematic acceleration, or ``None`` if unknown."""
+        return self.acceleration_xyz
+
+
+@dataclass(frozen=True)
+class ExternalWrench:
+    """External force/torque sample in the common ``map`` frame.
+
+    Semantics:
+    - ``force_xyz`` in newtons, ``torque_xyz`` in newton-metres (free couple)
+    - ``application_point_xyz`` in metres in ``map`` when known
+    - missing application point ⇒ force moment-arm contribution is unavailable
+      (free torque may still be applied); do not invent a point at the CoM
+    """
+
+    source: str
+    force_xyz: Vector3
+    torque_xyz: Vector3
+    application_point_xyz: Vector3 | None = None
+    confidence: float | None = None
+    timestamp: float | None = None
+    frame_id: str = "map"
+
+    def __post_init__(self) -> None:
+        if not self.source.strip():
+            raise ValueError("external wrench source must not be empty")
+        if not self.frame_id.strip():
+            raise ValueError("external wrench frame_id must not be empty")
+        _require_finite("external wrench force_xyz", *self.force_xyz)
+        _require_finite("external wrench torque_xyz", *self.torque_xyz)
+        if self.application_point_xyz is not None:
+            _require_finite("external wrench application_point_xyz", *self.application_point_xyz)
+        _require_optional_finite("external wrench confidence", self.confidence)
+        _require_optional_finite("external wrench timestamp", self.timestamp)
 
 
 @dataclass(frozen=True)
@@ -149,7 +214,97 @@ class CollisionStep:
 
 
 @dataclass(frozen=True)
+class CriticalTipEvidence:
+    """Secondary diagnostic: ideal geometric tip angles for flat configured support.
+
+    Hierarchy role: SECONDARY DIAGNOSTIC (vehicle/config property, not a route-step
+    primary metric). Geometric limits ``atan(reference_margin / h)`` only — not
+    Decision thresholds.
+
+    ``critical_edge`` is the edge with the smallest tip angle (legacy name).
+    Prefer ``minimum_tip_angle_edge`` in new code.
+    """
+
+    front_deg: float
+    rear_deg: float
+    left_deg: float
+    right_deg: float
+    minimum_deg: float
+    critical_edge: str
+
+    @property
+    def minimum_tip_angle_edge(self) -> str:
+        """Alias for ``critical_edge``: edge with the smallest tip angle."""
+        return self.critical_edge
+
+
+@dataclass(frozen=True)
+class DynamicStabilityEvidence:
+    """Dynamic rollover evidence under the point-mass / translational model.
+
+    Hierarchy (Prediction Python V1)
+    --------------------------------
+    - PRIMARY DYNAMIC: Stability Moment (``edge_stability_moments_nm``,
+      ``minimum_stability_moment_nm``, ``normalized_minimum_stability_moment``,
+      ``minimum_normalized_moment_edge`` / legacy ``critical_edge``)
+    - OPTIONAL DIAGNOSTIC: Point-mass ZMP (``zmp_*``)
+    - SECONDARY DIAGNOSTIC: Effective-gravity SSM (``effective_*``)
+
+    Effective SSM ≈ point-mass ZMP margin when gravity + translational
+    acceleration are the only loads and ``external_wrenches=[]``. They diverge
+    when external forces/torques are included.
+
+    Edge naming
+    -----------
+    - ``nearest_effective_edge`` / ``nearest_zmp_edge``: min **raw** support margin
+    - ``critical_edge`` / ``minimum_normalized_moment_edge``: min **normalized**
+      stability moment (not necessarily the nearest geometric edge)
+
+    Model scope: gravity, translational acceleration, external force with known
+    application point, external free torque. No ``-Iα`` / ``-ω×Iω``.
+    """
+
+    acceleration_available: bool
+    external_wrench_available: bool
+    external_wrench_included: bool
+    effective_force_xyz_n: Vector3 | None
+    effective_gravity_projection_xy: Vector2 | None
+    effective_ssm_m: float | None
+    normalized_effective_ssm: float | None
+    zmp_xy: Vector2 | None
+    zmp_margin_m: float | None
+    normalized_zmp_margin: float | None
+    edge_stability_moments_nm: dict[str, float] | None
+    minimum_stability_moment_nm: float | None
+    normalized_minimum_stability_moment: float | None
+    critical_edge: str | None
+    valid: bool
+    validity_reason: str
+    assumptions: tuple[str, ...] = ()
+    normalized_edge_stability_moments: dict[str, float] | None = None
+    nearest_effective_edge: str | None = None
+    nearest_zmp_edge: str | None = None
+
+    @property
+    def minimum_normalized_moment_edge(self) -> str | None:
+        """Alias for ``critical_edge``: most depleted normalized stability edge."""
+        return self.critical_edge
+
+
+@dataclass(frozen=True)
 class RolloverStep:
+    """One trajectory-step rollover evidence package (Prediction Python V1).
+
+    Primary baseline (always when geometry matches):
+      ``predicted_roll_deg``, ``predicted_pitch_deg``,
+      ``static_stability_margin_m``, ``normalized_static_stability_margin``,
+      ``nearest_static_edge``
+
+    Nested:
+      ``critical_tip`` — secondary diagnostic
+      ``dynamic_stability`` — primary dynamic + optional ZMP + secondary effective SSM
+    """
+
     step_id: int
     predicted_roll_deg: float
     predicted_pitch_deg: float
@@ -157,6 +312,9 @@ class RolloverStep:
     normalized_static_stability_margin: float
     terrain_id: Identifier
     confidence_or_validity: float | None
+    critical_tip: CriticalTipEvidence | None = None
+    dynamic_stability: DynamicStabilityEvidence | None = None
+    nearest_static_edge: str | None = None
 
 
 @dataclass(frozen=True)

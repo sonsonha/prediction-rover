@@ -1,0 +1,204 @@
+{
+  "name": "flat_static",
+  "events": [
+    {
+      "type": "trajectory",
+      "trajectory_id": 42,
+      "timestamp": 100.0,
+      "frame_id": "map",
+      "steps": [
+        {
+          "step_id": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 1,
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 2,
+          "x": 2.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 3,
+          "x": 3.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 4,
+          "x": 4.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 5,
+          "x": 5.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 6,
+          "x": 6.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 7,
+          "x": 7.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 8,
+          "x": 8.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 9,
+          "x": 9.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 10,
+          "x": 10.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      ]
+    },
+    {
+      "type": "objects",
+      "timestamp": 100.01,
+      "frame_id": "map",
+      "objects": []
+    },
+    {
+      "type": "geometry",
+      "source_trajectory_id": 42,
+      "timestamp": 100.02,
+      "frame_id": "map",
+      "source_trajectory_stamp": 100.0,
+      "steps": [
+        {
+          "step_id": 0,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 1,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 2,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 3,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 4,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 5,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 6,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 7,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 8,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 9,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        },
+        {
+          "step_id": 10,
+          "plane_id": "flat",
+          "normal_xyz": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "timestamp": 100.02
+        }
+      ]
+    }
+  ]
+}

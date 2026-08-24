@@ -1,0 +1,112 @@
+{
+  "name": "demo_external_force_height",
+  "events": [
+    {
+      "type": "trajectory",
+      "trajectory_id": 1,
+      "timestamp": 1.0,
+      "frame_id": "map",
+      "steps": [
+        {
+          "step_id": 0,
+          "x": 0.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 1,
+          "x": 1.0,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "step_id": 2,
+          "x": 2.0,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      ]
+    },
+    {
+      "type": "objects",
+      "timestamp": 1.01,
+      "frame_id": "map",
+      "objects": []
+    },
+    {
+      "type": "state",
+      "timestamp": 1.02,
+      "frame_id": "map",
+      "acceleration_xyz": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "type": "external_wrench",
+      "timestamp": 1.03,
+      "frame_id": "map",
+      "wrenches": [
+        {
+          "source": "push",
+          "force_xyz": [
+            0,
+            250,
+            0
+          ],
+          "torque_xyz": [
+            0,
+            0,
+            0
+          ],
+          "application_point_xyz": [
+            0,
+            0,
+            0.9
+          ]
+        }
+      ]
+    },
+    {
+      "type": "geometry",
+      "source_trajectory_id": 1,
+      "timestamp": 1.04,
+      "frame_id": "map",
+      "source_trajectory_stamp": 1.0,
+      "steps": [
+        {
+          "step_id": 0,
+          "plane_id": "demo_external_force_height",
+          "normal_xyz": [
+            0,
+            0,
+            1
+          ],
+          "timestamp": 1.04
+        },
+        {
+          "step_id": 1,
+          "plane_id": "demo_external_force_height",
+          "normal_xyz": [
+            0,
+            0,
+            1
+          ],
+          "timestamp": 1.04
+        },
+        {
+          "step_id": 2,
+          "plane_id": "demo_external_force_height",
+          "normal_xyz": [
+            0,
+            0,
+            1
+          ],
+          "timestamp": 1.04
+        }
+      ]
+    }
+  ],
+  "notes": "state and wrenches precede geometry so PredictionRuntime includes them in the cycle"
+}

@@ -110,14 +110,31 @@ def _draw_support_topdown(
     ys = [-half_width, -half_width, half_width, half_width, -half_width]
     axes.plot(xs, ys, color="tab:blue", label="track support polygon")
     axes.scatter(config.com_x_m, config.com_y_m, color="tab:green", s=55, label="CoM")
-    axes.scatter(*projected, color="tab:red", marker="x", s=65, label="projected CoM")
+    axes.scatter(*projected, color="tab:red", marker="x", s=65, label="static gravity projection")
     axes.plot(
         [config.com_x_m, projected[0]],
         [config.com_y_m, projected[1]],
         color="black",
         linestyle=":",
-        label="gravity projection",
+        label="gravity ray",
     )
+    dynamic = first.dynamic_stability
+    if dynamic is not None and dynamic.effective_gravity_projection_xy is not None:
+        axes.scatter(
+            *dynamic.effective_gravity_projection_xy,
+            color="tab:orange",
+            marker="+",
+            s=70,
+            label="effective-gravity projection",
+        )
+    if dynamic is not None and dynamic.zmp_xy is not None:
+        axes.scatter(
+            *dynamic.zmp_xy,
+            color="tab:purple",
+            marker="*",
+            s=80,
+            label="point-mass ZMP",
+        )
     edge_candidates = (
         (half_length, projected[1], half_length - projected[0], "front edge"),
         (-half_length, projected[1], projected[0] + half_length, "rear edge"),
@@ -132,11 +149,26 @@ def _draw_support_topdown(
         linewidth=2,
         label=f"nearest tipping edge ({edge_name})",
     )
+    lines = [
+        f"roll {first.predicted_roll_deg:.1f}°",
+        f"pitch {first.predicted_pitch_deg:.1f}°",
+        f"raw static SSM {first.static_stability_margin_m:.3f} m",
+        f"normalized static SSM {first.normalized_static_stability_margin:.3f}",
+    ]
+    if first.critical_tip is not None:
+        lines.append(
+            f"critical tip {first.critical_tip.minimum_deg:.1f}° ({first.critical_tip.critical_edge})"
+        )
+    dynamic = first.dynamic_stability
+    if dynamic is not None and dynamic.valid:
+        if dynamic.effective_ssm_m is not None:
+            lines.append(f"effective SSM {dynamic.effective_ssm_m:.3f} m")
+        if dynamic.zmp_margin_m is not None:
+            lines.append(f"ZMP margin {dynamic.zmp_margin_m:.3f} m")
+        if dynamic.minimum_stability_moment_nm is not None:
+            lines.append(f"min moment {dynamic.minimum_stability_moment_nm:.1f} N·m")
     axes.annotate(
-        f"roll {first.predicted_roll_deg:.1f}°\n"
-        f"pitch {first.predicted_pitch_deg:.1f}°\n"
-        f"raw SSM {first.static_stability_margin_m:.3f} m\n"
-        f"normalized SSM {first.normalized_static_stability_margin:.3f}",
+        "\n".join(lines),
         xy=(0.03, 0.97),
         xycoords="axes fraction",
         va="top",
