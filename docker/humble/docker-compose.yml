@@ -1,0 +1,19 @@
+services:
+  prediction-humble:
+    build:
+      context: ../..
+      dockerfile: docker/humble/Dockerfile
+    image: prediction-humble-dev:latest
+    container_name: prediction-humble-dev
+    network_mode: host
+    ipc: host
+    pid: host
+    stdin_open: true
+    tty: true
+    working_dir: /workspace/prediction-src
+    volumes:
+      - ../..:/workspace/prediction-src
+      - ../../../bags:/workspace/bags:ro
+    environment:
+      - ROS_DOMAIN_ID=0
+      - PYTHONUNBUFFERED=1

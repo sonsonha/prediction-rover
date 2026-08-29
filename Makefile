@@ -2,48 +2,78 @@
 #
 # Usage (from this directory):
 #   make help
+#   make static-node / static-echo / static-mock   # 3-terminal ROS static
+#   make dynamic-node / dynamic-echo / dynamic-mock
 #   make test
-#   make demo-viz          # all canonical demos → outputs/runtime_demos/<name>/
-#   make demo-flat         # one static flat demo + plots
-#   make demo-dynamic      # dynamic-profile demos + plots
+#   make demo-viz
 #   make runtime SCENARIO=mock/runtime_scenarios/demo_side_slope_15deg.json PROFILE=static
-#   make mocks
-#   make scenario FILE=mock/scenarios/side_slope_15deg.json
 
 PY         := .venv/bin/python
 CONFIG     := config/rover.mock.yaml
 OUTDIR     := outputs/mock_validation
 DEMO_OUT   := outputs/runtime_demos
 RUNTIME_DIR := mock/runtime_scenarios
+SCRIPTS    := scripts
 CACHE      := MPLCONFIGDIR=.cache/matplotlib XDG_CACHE_HOME=.cache
 PROFILE    ?= static
 SCENARIO   ?=
 
-.PHONY: help install test ros-test ros-build mocks scenario \
-	demo demo-viz demo-flat demo-dynamic demo-slope list-demos runtime open-demos
+HUMBLE_COMPOSE := docker/humble/docker-compose.yml
+HUMBLE_RUN := docker compose -f $(HUMBLE_COMPOSE) run --rm prediction-humble bash -lc
+
+.PHONY: help install test ros-test ros-build ros-status mocks scenario \
+	demo demo-viz demo-flat demo-dynamic demo-slope list-demos runtime open-demos \
+	static-node static-echo static-mock \
+	dynamic-node dynamic-echo dynamic-mock dynamic-zero-mock dynamic-wrench-mock \
+	humble-image humble-shell humble-install humble-test humble-build \
+	humble-static humble-dynamic humble-bag humble-status
 
 help:
 	@echo "Prediction Python V1 — make targets"
 	@echo ""
-	@echo "  make install              # create .venv and install package + pytest"
-	@echo "  make test                 # run pytest"
+	@echo "STATIC  (3 terminals)"
+	@echo "  make static-node           Terminal 1: Prediction static"
+	@echo "  make static-echo           Terminal 2: Echo /predict_output"
+	@echo "  make static-mock           Terminal 3: Mock static"
+	@echo ""
+	@echo "DYNAMIC  (3 terminals)"
+	@echo "  make dynamic-node          Terminal 1: Prediction dynamic"
+	@echo "  make dynamic-echo          Terminal 2: Echo /predict_output"
+	@echo "  make dynamic-mock          Terminal 3: Mock acceleration case"
+	@echo "  make dynamic-zero-mock     Terminal 3: Mock zero acceleration"
+	@echo "  make dynamic-wrench-mock   Terminal 3: Mock external wrench"
+	@echo ""
+	@echo "ROS tooling (Jazzy host)"
+	@echo "  make ros-status            Env snapshot (distro / python / pkg prefix)"
+	@echo "  make ros-test / ros-build  Pytest for prediction_ros / colcon build"
+	@echo ""
+	@echo "Humble Docker (Ubuntu 22.04 integration)"
+	@echo "  make humble-image          Build prediction-humble-dev image"
+	@echo "  make humble-shell          Interactive shell in Humble container"
+	@echo "  make humble-install        Python .venv-humble + pip install"
+	@echo "  make humble-test           Pure Python pytest in container"
+	@echo "  make humble-build          colcon -> ros2/install_humble"
+	@echo "  make humble-static         Static mock smoke test"
+	@echo "  make humble-dynamic        Dynamic mock smoke test"
+	@echo "  make humble-bag            Short rosbag regression"
+	@echo "  make humble-status         Env snapshot inside container"
+	@echo ""
+	@echo "Python package"
+	@echo "  make install               # create .venv and install package + pytest"
+	@echo "  make test                  # run pytest"
 	@echo ""
 	@echo "  Runtime demos (event streams + PNG/JSON artifacts):"
-	@echo "  make demo-viz             # all demo_*.json with default profiles"
-	@echo "  make demo-flat            # flat static + plots"
-	@echo "  make demo-slope           # side slope 15° + plots"
-	@echo "  make demo-dynamic         # dynamic profile demos + plots"
+	@echo "  make demo-viz              # all demo_*.json with default profiles"
+	@echo "  make demo-flat             # flat static + plots"
+	@echo "  make demo-slope            # side slope 15° + plots"
+	@echo "  make demo-dynamic          # dynamic profile demos + plots"
 	@echo "  make runtime SCENARIO=... PROFILE=static|dynamic"
-	@echo "  make list-demos           # list runtime scenario files"
-	@echo "  make open-demos           # print artifact paths under $(DEMO_OUT)"
+	@echo "  make list-demos            # list runtime scenario files"
+	@echo "  make open-demos            # print artifact paths under $(DEMO_OUT)"
 	@echo ""
 	@echo "  Algorithm mocks (PredictionCore, no runtime profile):"
-	@echo "  make mocks                # all mock/scenarios/*.json"
+	@echo "  make mocks                 # all mock/scenarios/*.json"
 	@echo "  make scenario FILE=mock/scenarios/<name>.json"
-	@echo ""
-	@echo "  ROS (optional — requires sourced ROS 2 + colcon):"
-	@echo "  make ros-test / ros-build"
-	@echo "  ros2 launch prediction_ros prediction.launch.py config_path:=... prediction_profile:=dynamic"
 
 install:
 	python3 -m venv .venv
@@ -144,6 +174,62 @@ ros-test:
 ros-build:
 	@test -n "$$ROS_DISTRO" || (echo "Source ROS 2 first: source /opt/ros/<distro>/setup.bash" && exit 1)
 	cd ros2 && colcon build --packages-select safety_perception_msgs prediction_ros
+
+# --- ROS 3-terminal manual test helpers (no auto-rebuild; no background fan-out) ---
+static-node:
+	@$(SCRIPTS)/run_prediction.sh static
+
+static-echo:
+	@$(SCRIPTS)/run_echo.sh
+
+static-mock:
+	@$(SCRIPTS)/run_mock.sh static
+
+dynamic-node:
+	@$(SCRIPTS)/run_prediction.sh dynamic
+
+dynamic-echo:
+	@$(SCRIPTS)/run_echo.sh
+
+dynamic-mock:
+	@$(SCRIPTS)/run_mock.sh dynamic
+
+dynamic-zero-mock:
+	@$(SCRIPTS)/run_mock.sh dynamic_zero
+
+dynamic-wrench-mock:
+	@$(SCRIPTS)/run_mock.sh dynamic_wrench
+
+ros-status:
+	@$(SCRIPTS)/ros_status.sh
+
+# --- Humble Docker workflow (does not touch Jazzy .venv / ros2/install) ---
+humble-image:
+	docker compose -f $(HUMBLE_COMPOSE) build
+
+humble-shell:
+	docker compose -f $(HUMBLE_COMPOSE) run --rm prediction-humble bash
+
+humble-install:
+	$(HUMBLE_RUN) "chmod +x scripts/*.sh && scripts/humble_install_python.sh"
+
+humble-test: humble-install humble-build
+	$(HUMBLE_RUN) "scripts/humble_test_python.sh"
+
+humble-build:
+	$(HUMBLE_RUN) "chmod +x scripts/*.sh && scripts/humble_build.sh"
+
+humble-static: humble-build
+	$(HUMBLE_RUN) "scripts/humble_smoke_mock.sh static"
+
+humble-dynamic: humble-build
+	$(HUMBLE_RUN) "scripts/humble_smoke_mock.sh dynamic"
+
+humble-bag: humble-build
+	$(HUMBLE_RUN) "scripts/humble_smoke_bag.sh /workspace/bags/manual_rollover_20260818_080815 8"
+
+humble-status:
+	$(HUMBLE_RUN) "source scripts/humble_env.sh && echo PROJECT_ROOT=\$$PROJECT_ROOT && echo ROS_DISTRO=\$$ROS_DISTRO && which python && python --version && ros2 pkg prefix prediction_ros && ros2 pkg prefix safety_perception_msgs"
 
 mocks:
 	$(CACHE) $(PY) -m prediction_core.cli run-all-mocks \
