@@ -1,0 +1,40 @@
+trajectory_adapter_node:
+  ros__parameters:
+    input_topic: /lr/mavlink/trajectory_future
+    output_topic: /trajectory
+    expected_frame_id: map
+    force_frame_id_map: true
+    horizon_steps: 20
+    path_stride: 1
+    output_dt_sec: 0.25
+
+geometry_adapter_node:
+  ros__parameters:
+    trajectory_topic: /trajectory
+    grid_map_topic: /terrain_geometry/grid_map
+    output_topic: /geometry
+    expected_frame_id: map
+    force_frame_id_map: true
+    allow_flat_fallback: false
+
+rover_state_adapter_node:
+  ros__parameters:
+    position_topic: /lr/mavlink/position_enu
+    attitude_topic: /lr/mavlink/attitude_enu
+    output_topic: /rover/state
+    expected_frame_id: map
+    force_frame_id_map: true
+
+empty_objects_bridge_node:
+  ros__parameters:
+    # Must be explicitly enabled — smoke / gate only.
+    enable_empty_objects: false
+    trajectory_topic: /trajectory
+    output_topic: /tracked_objects
+
+tracked_objects_adapter_node:
+  ros__parameters:
+    input_topic: /terrain_geometry/object_boxes_3d
+    output_topic: /tracked_objects
+    expected_frame_id: map
+    tf_timeout_sec: 0.2
