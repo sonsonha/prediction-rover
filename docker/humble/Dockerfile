@@ -35,6 +35,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-ament-cmake \
     ros-humble-rosidl-default-generators \
     ros-humble-rosidl-default-runtime \
+    ros-humble-rviz2 \
+    ros-humble-grid-map-msgs \
+    ros-humble-message-filters \
+    ros-humble-vision-msgs \
+    ros-humble-zed-description \
+    ros-humble-xacro \
+    ros-humble-robot-localization \
+    ros-humble-diagnostic-updater \
+    python3-opencv \
     && rm -rf /var/lib/apt/lists/*
 
 RUN rosdep init 2>/dev/null || true \
@@ -45,7 +54,15 @@ RUN pip3 install --no-cache-dir \
     "shapely>=2.0" \
     "PyYAML>=6.0" \
     "matplotlib>=3.7" \
-    "pytest>=7.4"
+    "pytest>=7.4" \
+    "setuptools>=77,<80" \
+    "packaging>=24,<26"
+
+# Segmentation inference (lr_segmentation/requirements.txt); CUDA 12.x wheels.
+RUN pip3 install --no-cache-dir \
+    torch \
+    --index-url https://download.pytorch.org/whl/cu124 \
+    && pip3 install --no-cache-dir "ultralytics>=8.3,<9"
 
 COPY docker/humble/ros_entrypoint.sh /ros_entrypoint.sh
 RUN chmod +x /ros_entrypoint.sh

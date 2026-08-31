@@ -5,6 +5,7 @@
 *.egg-info/
 __pycache__/
 *.py[cod]
+*.backup
 
 # Generated CLI artifacts. Remove this rule if validation evidence is committed.
 outputs/
@@ -16,4 +17,11 @@ ros2/log/
 ros2/build_humble/
 ros2/install_humble/
 ros2/log_humble/
+
+# Large / generated runtime data (keep outside repo)
+*.svo2
+raw/
+bags/
+*.log
+
 .DS_Store

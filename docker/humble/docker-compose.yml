@@ -17,3 +17,30 @@ services:
     environment:
       - ROS_DOMAIN_ID=0
       - PYTHONUNBUFFERED=1
+
+  rviz:
+    image: prediction-humble-dev:latest
+    container_name: prediction-humble-rviz
+    network_mode: host
+    ipc: host
+    gpus: all
+    working_dir: /workspace/prediction-src
+
+    volumes:
+      - ../..:/workspace/prediction-src
+      - ../../../bags:/workspace/bags:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+    environment:
+      - ROS_DOMAIN_ID=0
+      - DISPLAY=:10
+      - XDG_RUNTIME_DIR=/tmp/runtime-root
+      - NVIDIA_DRIVER_CAPABILITIES=all
+
+    command:
+      - bash
+      - -lc
+      - |
+        mkdir -p /tmp/runtime-root
+        chmod 700 /tmp/runtime-root
+        exec rviz2
