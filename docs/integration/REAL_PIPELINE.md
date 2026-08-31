@@ -60,7 +60,9 @@ All Prediction inputs use **`map`** as the world frame.
 
 ## ROS domain
 
-Integration and demo runs use **`ROS_DOMAIN_ID=42`**.
+Integration and demo runs commonly use **`ROS_DOMAIN_ID=42`**. Isolated validation
+runs may use other domains (e.g. live dynamic E2E domain 44; dynamic fixture
+capture 46 / replay 47). Always keep a single clean domain per run.
 
 ## Packages in this repository
 
@@ -84,8 +86,20 @@ branches/SHAs are.
 | Path | Content |
 |------|---------|
 | `/data/rover_workspace/raw/session_20260710_0924/` | SVO2 + MAVLink CSV |
-| `/data/rover_workspace/prediction/bags/` | Canonical input rosbags |
-| `/data/rover_workspace/prediction/logs/` | Generated gate/demo logs |
+| `/data/rover_workspace/prediction/bags/` | Input / evidence / replay fixture rosbags |
+| `/data/rover_workspace/prediction/logs/` | Generated gate/demo/validation logs |
+
+### Bags
+
+| Bag | Role |
+|-----|------|
+| `session_0924_dynamic_prediction_inputs` | **Dynamic replay fixture (PASS)** — four canonical inputs only; derived from a successful live concurrent Dynamic Prediction run |
+| `dynamic_live_evidence_20260831` | Live evidence bag (includes `/predict_output` + `/clock`) used to derive the dynamic fixture |
+| `session_0924_pipe_prediction_inputs` | Older four-topic input bag — **not** a valid dynamic replay fixture (`FAIL_INPUT_ALIGNMENT` due to objects/state before trajectory cycle reset). Kept for reference / static use |
+
+Dynamic Prediction live E2E and dynamic fixture replay are **PASS**. Physical
+terrain/rollover model correctness remains **PENDING**. See
+`VALIDATION_STATUS.md` and `KNOWN_LIMITATIONS.md`.
 
 ## Demo lap behavior
 

@@ -49,21 +49,28 @@ integration exactly.
 
 | Setting | Value |
 |---------|-------|
-| `ROS_DOMAIN_ID` | `42` |
+| `ROS_DOMAIN_ID` | `42` (demo/gate); isolated validation may use other domains |
 | Docker image | `prediction-humble-dev:latest` (built from this repo) |
 | Canonical frame | `map` |
 | Sim time source | ZED `/clock` (`publish_svo_clock:=true`) |
-| Canonical bag | `prediction/bags/session_0924_pipe_prediction_inputs` |
+| Dynamic replay fixture | `prediction/bags/session_0924_dynamic_prediction_inputs` |
+| Older input bag (not dynamic fixture) | `prediction/bags/session_0924_pipe_prediction_inputs` |
 
-## Gate reference
+## Validation references
 
-Primary upstream PASS:
-`prediction/logs/condition_gate_20260831_035052/report_upstream.json`
+| Item | Result | Log / bag |
+|------|--------|-----------|
+| Upstream condition gate | PASS | `prediction/logs/condition_gate_20260831_035052/report_upstream.json` |
+| Dynamic Prediction live E2E | PASS | `prediction/logs/dynamic_e2e_concurrent_20260831_225025/` |
+| Dynamic fixture capture + replay | PASS | `prediction/logs/dynamic_fixture_20260831_230721/` |
+| Dynamic replay fixture bag | PASS | `prediction/bags/session_0924_dynamic_prediction_inputs` (traj 16 / objects 4 / geom 13 / state 27; output IDs 1, 11) |
+| Older bag as dynamic replay | FAIL_INPUT_ALIGNMENT | `prediction/logs/dynamic_bag_replay_20260831_225636/` + `session_0924_pipe_prediction_inputs` |
+| Physical terrain/rollover correctness | PENDING | — |
 
 ## Local-only (not in Git)
 
 - `/data/rover_workspace/integration_ws/` — colcon overlay (`build/`, `install/`, `log/`)
-- `/data/rover_workspace/prediction/logs/` — generated gate/demo output
+- `/data/rover_workspace/prediction/logs/` — generated gate/demo/validation output
 - `/data/rover_workspace/raw/` — session recordings (SVO2, MAVLink)
 - `/data/rover_workspace/prediction/bags/` — rosbag artifacts
 - `/data/rover_workspace/prediction/.cache/` — ZED build caches

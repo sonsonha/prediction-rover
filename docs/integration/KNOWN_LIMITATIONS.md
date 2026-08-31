@@ -14,7 +14,21 @@
 ## Rollover (Prediction V1)
 
 - Rollover model does **not** model suspension, soil interaction, or rotational inertia.
-- Stability/ZMP evidence often invalid on real upstream data.
+- On validated Dynamic Prediction runs (live E2E + dynamic replay fixture),
+  **diagnostic** fields are populated with `acceleration_available=true`,
+  `stability_moment.valid=true`, and `zmp.valid=true`.
+- **Physical terrain normal correctness** and **physical rollover model validation**
+  remain **PENDING** — do not treat diagnostic validity as physical correctness.
+
+## Dynamic bag fixtures / cycle ordering
+
+PredictionRuntime clears cycle-bound objects/geometry/state when a **new**
+`trajectory_id` arrives. That is intended cycle semantics, not a bug.
+
+| Bag | Dynamic replay |
+|-----|----------------|
+| `session_0924_dynamic_prediction_inputs` | **PASS** — ordering preserves successful live cycles (e.g. traj → geometry → objects → state → predict for IDs 1, 11) |
+| `session_0924_pipe_prediction_inputs` | **Not a valid dynamic fixture** — objects/state often arrive **before** the new trajectory; cache clear leaves the active cycle without objects → no `/predict_output` (`FAIL_INPUT_ALIGNMENT`). Kept as a reference / static input bag |
 
 ## Trajectory source
 
@@ -34,7 +48,7 @@
 
 - **Decision node** not implemented.
 - **Prediction-specific RViz visualization** (collision/rollover overlays) not
-  implemented yet.
+  implemented yet — final customer RViz visualization **PENDING**.
 - `config/rviz/real_pipeline_debug.rviz` is a debug layout only.
 
 ## Repository notes
