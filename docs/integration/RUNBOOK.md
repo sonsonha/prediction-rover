@@ -2,20 +2,50 @@
 
 ## Prerequisites
 
-- Docker with NVIDIA GPU support
-- Host workspace mounted at `/data/rover_workspace`
+- Linux host with Docker and NVIDIA GPU support
+- Workspace mounted at `/data/rover_workspace`
 - Session `0924` raw data under `/data/rover_workspace/raw/session_20260710_0924/`
-- `integration_ws` built (see `integration_ws/README.md` in workspace)
-- Segmentation model: `${LR_ROS2}/models/best.pt`
+- Integration forks cloned and pinned per `INTEGRATION_SNAPSHOT.md`
+- `integration_ws` colcon overlay built against those pins
+- Segmentation model weights (e.g. `lr-ros2/models/best.pt`)
+
+## Clone reproducible forks
+
+```bash
+# Prediction (this repo)
+git clone git@github.com:sonsonha/prediction-rover.git \
+  /data/rover_workspace/prediction/prediction-src
+cd /data/rover_workspace/prediction/prediction-src
+git checkout integration/humble-real-pipeline
+
+# Perception / segmentation / terrain
+git clone git@github.com:sonsonha/lr-ros2.git /data/rover_workspace/lr-ros2
+cd /data/rover_workspace/lr-ros2
+git checkout integration/real-terrain-segmentation
+
+# Trajectory / MAVLink / pointcloud
+git clone git@github.com:sonsonha/ROS2_rover_trajectory.git \
+  /data/rover_workspace/ROS2_rover_trajectory
+cd /data/rover_workspace/ROS2_rover_trajectory
+git checkout main   # SHA e345768
+```
+
+These `sonsonha` repositories are **integration snapshots**, not guaranteed to track
+the canonical team upstreams.
 
 ## Docker build
+
+Build the Humble integration image from this repository:
 
 ```bash
 cd /data/rover_workspace/prediction/prediction-src
 docker build -f docker/humble/Dockerfile -t prediction-humble-dev:latest .
 ```
 
-## Environment
+All integration commands below run **inside** `prediction-humble-dev:latest`.
+Do not run ROS nodes or RViz directly on an Ubuntu 24.04 host without the container.
+
+## Required runtime flags
 
 Always use for integration/demo:
 
@@ -24,6 +54,8 @@ ROS_DOMAIN_ID=42
 --network host
 --ipc=host
 ```
+
+GPU demo/gate additionally requires `--gpus all`.
 
 ## Persistent demo (processing stack)
 
@@ -35,9 +67,12 @@ docker run --rm --gpus all --network host --ipc=host \
   bash /data/rover_workspace/prediction/prediction-src/scripts/integration/run_rviz_demo.sh
 ```
 
-Runs laps until Ctrl+C. Logs go to `/data/rover_workspace/prediction/logs/rviz_demo_*`.
+Runs laps until Ctrl+C. Logs go to `/data/rover_workspace/prediction/logs/rviz_demo_*`
+(outside Git).
 
 ## RViz viewer (separate container)
+
+RViz runs **inside the Humble Docker image**, not on the host OS.
 
 ```bash
 docker run --rm --network host --ipc=host \
@@ -49,11 +84,19 @@ docker run --rm --network host --ipc=host \
   bash /data/rover_workspace/prediction/prediction-src/scripts/integration/run_rviz_viewer.sh
 ```
 
-### RViz settings
+The viewer loads `config/rviz/real_pipeline_debug.rviz` from this repository.
 
-- **Fixed Frame:** `map`
-- **Image topic:** `/segmentation/overlay`
-- **Image reliability:** Best Effort (configured in `config/rviz/real_pipeline_debug.rviz`)
+### RViz display settings
+
+| Setting | Value |
+|---------|-------|
+| Fixed Frame | `map` |
+| Image topic | `/segmentation/overlay` |
+| Image Reliability Policy | **Best Effort** |
+| Image Durability Policy | **Volatile** |
+
+`config/rviz/real_pipeline_debug.rviz` is a **debug layout only** — not a final
+Prediction demo config (collision/rollover visualization not implemented).
 
 ## Mac VNC tunnel (view RViz remotely)
 
@@ -63,8 +106,8 @@ On Mac (replace `HOST` with Linux machine IP):
 ssh -L 5910:localhost:5910 user@HOST
 ```
 
-On Linux host, ensure VNC/display `:10` is available and `DISPLAY=:10` is set in the
-viewer container.
+On the Linux host, ensure a VNC/display server is available at `:10` and that
+`DISPLAY=:10` is passed to the viewer container.
 
 ## Upstream condition gate (~180 s)
 

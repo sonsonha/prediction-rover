@@ -2,34 +2,44 @@
 
 ## Tracked objects
 
-- Track IDs are **non-persistent** across frames (frame-local hashing).
-- `velocity_valid=false` for current real objects from terrain boxes.
-- Object velocity is **not used** by Collision V1.
+- Tracked IDs are currently **non-persistent** across frames (frame-local hashing).
+- Current tracked-object **velocity is unavailable**; `velocity_valid=false` for real
+  terrain-box objects.
 
-## Collision / rollover (Prediction V1)
+## Collision (Prediction V1)
 
-- Collision V1 uses **discrete geometry** sampling.
-- No swept collision interpolation.
-- Rollover model has known limitations; stability/ZMP evidence often invalid on real data.
+- Collision V1 is **discrete** geometry sampling — no swept interpolation.
+- Collision V1 **currently ignores object velocity**.
+
+## Rollover (Prediction V1)
+
+- Rollover model does **not** model suspension, soil interaction, or rotational inertia.
+- Stability/ZMP evidence often invalid on real upstream data.
 
 ## Trajectory source
 
-- `/lr/mavlink/trajectory_future` is a **recorded/reference future path**, not a production online planner.
-- Trajectory adapter applies ~**1 m near-origin skip** (integration workaround for terrain forward coverage).
+- Trajectory replay is a **recorded/reference future trajectory**, not an online
+  production planner.
+- Trajectory adapter applies ~**1 m near-origin skip** — an integration workaround for
+  terrain forward coverage.
 
 ## SVO / demo
 
-- Native ZED `svo_loop` is **incompatible** with `publish_svo_clock` / SVO timestamps.
-- Demo (`run_rviz_demo.sh`) restarts the **complete stack** at SVO EOF.
-- Sim clock **jumps backward** each lap; RViz may flicker.
+- Native ZED SVO looping is **incompatible** with the current SVO timestamp / `/clock`
+  configuration.
+- Demo performs **whole-stack restart** on SVO EOF.
+- Sim clock **jumps backward** between laps; RViz may flicker.
 
 ## Scope gaps
 
 - **Decision node** not implemented.
-- **Prediction-specific RViz visualization** (collision/rollover overlays) not implemented.
+- **Prediction-specific RViz visualization** (collision/rollover overlays) not
+  implemented yet.
 - `config/rviz/real_pipeline_debug.rviz` is a debug layout only.
 
-## Upstream repos
+## Repository notes
 
-- `lr-ros2` and `ROS2_rover_trajectory` are separate repositories with their own release process.
-- `integration_ws` colcon overlay must be built against compatible branches (see `INTEGRATION_SNAPSHOT.md`).
+- `sonsonha` forks are **reproducible integration snapshots**, not necessarily the
+  canonical team upstreams.
+- `integration_ws` colcon overlay must be built against compatible pinned branches
+  (see `INTEGRATION_SNAPSHOT.md`).
