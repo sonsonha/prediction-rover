@@ -1,0 +1,10 @@
+# Shared path resolution for integration tooling (source from sibling scripts).
+INTEGRATION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PREDICTION_SRC_ROOT="$(cd "${INTEGRATION_DIR}/../.." && pwd)"
+ROVER_WORKSPACE="${ROVER_WORKSPACE:-/data/rover_workspace}"
+PREDICTION_LOGS="${ROVER_WORKSPACE}/prediction/logs"
+PREDICTION_BAGS="${ROVER_WORKSPACE}/prediction/bags"
+PREDICTION_CACHE="${ROVER_WORKSPACE}/prediction/.cache"
+INTEGRATION_WS="${ROVER_WORKSPACE}/integration_ws"
+LR_ROS2="${ROVER_WORKSPACE}/lr-ros2"
+RAW_DATA="${ROVER_WORKSPACE}/raw"
