@@ -158,5 +158,40 @@ docker run --rm --network host --ipc=host \
 | Live concurrent Dynamic E2E | 44 | PASS | `prediction/logs/dynamic_e2e_concurrent_20260831_225025/` |
 | Dynamic fixture capture + replay | 46 / 47 | PASS | `prediction/logs/dynamic_fixture_20260831_230721/` |
 | Older bag dynamic replay | 45 | FAIL_INPUT_ALIGNMENT | `prediction/logs/dynamic_bag_replay_20260831_225636/` |
+| Prediction visualization fixture replay | 48 | PASS (topics) | `prediction/logs/prediction_viz_replay_20260831_domain48/` |
 
 Physical terrain/rollover correctness: **PENDING**.
+Decision: **NOT IMPLEMENTED**.
+
+## Prediction RViz visualization
+
+Package: `ros2/prediction_visualization` (visualization only — no physics /
+Decision). Design: `docs/integration/PREDICTION_VISUALIZATION_DESIGN.md`.
+
+Headless fixture check (Prediction + viz **before** bag play):
+
+```bash
+docker run --rm --network host --ipc=host \
+  -e ROS_DOMAIN_ID=48 \
+  -v /data/rover_workspace:/data/rover_workspace \
+  -v /data/rover_workspace/prediction/prediction-src:/workspace/prediction-src \
+  -w /workspace/prediction-src \
+  prediction-humble-dev:latest \
+  bash scripts/integration/run_prediction_viz.sh
+```
+
+RViz viewer (Prediction preset; keep `real_pipeline_debug.rviz` for upstream debug):
+
+```bash
+docker run --rm --gpus all --network host --ipc=host \
+  -e ROS_DOMAIN_ID=48 \
+  -e DISPLAY=:10 \
+  -e NVIDIA_DRIVER_CAPABILITIES=all \
+  -v /data/rover_workspace:/data/rover_workspace \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  prediction-humble-dev:latest \
+  bash /data/rover_workspace/prediction/prediction-src/scripts/integration/run_prediction_rviz_viewer.sh
+```
+
+Config: `config/rviz/prediction_dynamic_debug.rviz` (Fixed Frame `map`; Image
+`/segmentation/overlay` Best Effort / Volatile).
