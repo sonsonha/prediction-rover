@@ -1,0 +1,15 @@
+# TEST / MOCK VALUES ONLY — visualization defaults (not field CAD).
+prediction_visualization:
+  ros__parameters:
+    use_sim_time: true
+    fixed_frame: map
+    terrain_normal_stride: 2
+    normal_arrow_scale: 0.45
+    object_label_enabled: true
+    status_text_enabled: true
+    trajectory_step_markers_enabled: false
+    body_length_m: 1.05
+    body_width_m: 0.90
+    body_height_m: 0.50
+    heading_arrow_length_m: 0.6
+    z_lift_m: 0.05
