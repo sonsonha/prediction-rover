@@ -18,7 +18,7 @@ Validated session and repository SHAs for reproducing the real pipeline integrat
 |------|--------|-----|
 | `lr-ros2` | `integration/real-terrain-segmentation` | `cb580c0` |
 | `ROS2_rover_trajectory` | `main` | `e345768` |
-| `prediction-rover` (this repo) | `integration/humble-real-pipeline` | `d0f54c1` |
+| `prediction-rover` (this repo) | `integration/humble-real-pipeline` | `49b6390` |
 
 ## Runtime
 
