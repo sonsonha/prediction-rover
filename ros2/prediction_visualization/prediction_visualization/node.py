@@ -10,6 +10,7 @@ from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray
 
 from safety_perception_msgs.msg import (
+    DecisionEvidence,
     GeometryArray,
     PredictionOutput,
     RoverState,
@@ -52,6 +53,7 @@ class PredictionVisualizationNode(Node):
         self._geometry: GeometryArray | None = None
         self._rover: RoverState | None = None
         self._predict: PredictionOutput | None = None
+        self._decision_evidence: DecisionEvidence | None = None
 
         qos = 10
         self.create_subscription(Trajectory, "/trajectory", self._on_traj, qos)
@@ -62,6 +64,9 @@ class PredictionVisualizationNode(Node):
         self.create_subscription(RoverState, "/rover/state", self._on_rover, qos)
         self.create_subscription(
             PredictionOutput, "/predict_output", self._on_predict, qos
+        )
+        self.create_subscription(
+            DecisionEvidence, "/decision/evidence", self._on_decision_evidence, qos
         )
 
         self._pub_path = self.create_publisher(Path, "/prediction_viz/trajectory", qos)
@@ -107,7 +112,6 @@ class PredictionVisualizationNode(Node):
             clear_namespaces(frame, ("rollover", "rollover_text"), stamp)
         )
         self._pub_zmp.publish(clear_namespaces(frame, ("zmp",), stamp))
-        self._pub_status.publish(clear_namespaces(frame, ("status",), stamp))
 
     def _publish_trajectory_layer(self) -> None:
         assert self._traj is not None
@@ -168,13 +172,46 @@ class PredictionVisualizationNode(Node):
             )
         )
 
+    def _publish_status_layer(self, stamp: Any | None = None) -> None:
+        if self._traj is None:
+            return
+        pred = self._matching_prediction()
+        if stamp is None:
+            stamp = (
+                pred.header.stamp
+                if pred is not None
+                else self._traj.header.stamp
+            )
+        anchor = None
+        if self._traj.steps:
+            s0 = self._traj.steps[0]
+            anchor = (float(s0.x), float(s0.y))
+        self._pub_status.publish(
+            build_status_markers(
+                pred,
+                int(self._traj.trajectory_id),
+                self._frame(),
+                enabled=bool(self._param("status_text_enabled")),
+                anchor_xy=anchor,
+                stamp=stamp,
+                decision_evidence=self._decision_evidence,
+            )
+        )
+
     def _publish_prediction_layers(self) -> None:
         if self._traj is None:
             return
         pred = self._matching_prediction()
         stamp = pred.header.stamp if pred is not None else self._traj.header.stamp
         if pred is None:
-            self._clear_prediction_pubs(stamp)
+            self._pub_collision.publish(
+                clear_namespaces(self._frame(), ("collision", "collision_text"), stamp)
+            )
+            self._pub_rollover.publish(
+                clear_namespaces(self._frame(), ("rollover", "rollover_text"), stamp)
+            )
+            self._pub_zmp.publish(clear_namespaces(self._frame(), ("zmp",), stamp))
+            self._publish_status_layer(stamp)
             return
         by_id = trajectory_steps_by_id(self._traj.steps)
         frame = self._frame()
@@ -188,20 +225,7 @@ class PredictionVisualizationNode(Node):
         self._pub_zmp.publish(
             build_zmp_markers(pred, by_id, frame, z_lift_m=z + 0.04, stamp=stamp)
         )
-        anchor = None
-        if self._traj.steps:
-            s0 = self._traj.steps[0]
-            anchor = (float(s0.x), float(s0.y))
-        self._pub_status.publish(
-            build_status_markers(
-                pred,
-                int(self._traj.trajectory_id),
-                frame,
-                enabled=bool(self._param("status_text_enabled")),
-                anchor_xy=anchor,
-                stamp=stamp,
-            )
-        )
+        self._publish_status_layer(stamp)
 
     def _on_traj(self, msg: Trajectory) -> None:
         self._traj = msg
@@ -237,6 +261,10 @@ class PredictionVisualizationNode(Node):
             return
         self._predict = msg
         self._publish_prediction_layers()
+
+    def _on_decision_evidence(self, msg: DecisionEvidence) -> None:
+        self._decision_evidence = msg
+        self._publish_status_layer(msg.header.stamp)
 
 
 def main(args: list[str] | None = None) -> None:

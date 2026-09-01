@@ -11,7 +11,7 @@ echo "→ colcon build (Humble) into install_humble/"
 colcon build \
   --build-base build_humble \
   --install-base install_humble \
-  --packages-select safety_perception_msgs prediction_ros prediction_visualization
+  --packages-select safety_perception_msgs prediction_ros prediction_visualization decision_ros
 
 _restore_nounset=0
 case "$-" in
@@ -23,3 +23,4 @@ if [[ "${_restore_nounset}" -eq 1 ]]; then set -u; fi
 unset _restore_nounset
 echo "→ ros2 pkg prefix prediction_ros: $(ros2 pkg prefix prediction_ros)"
 echo "→ ros2 pkg prefix prediction_visualization: $(ros2 pkg prefix prediction_visualization)"
+echo "→ ros2 pkg prefix decision_ros: $(ros2 pkg prefix decision_ros)"

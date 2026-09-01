@@ -1,0 +1,25 @@
+std_msgs/Header header
+
+string source_trajectory_id
+
+uint8 evidence_state
+uint8 NO_PREDICTION=0
+uint8 PREDICTION_STALE=1
+uint8 PREDICTION_CURRENT=2
+
+bool collision_candidates_present
+bool rollover_baseline_present
+bool dynamic_stability_moment_valid
+bool zmp_valid
+
+bool nearest_collision_distance_valid
+float64 nearest_collision_distance_m
+
+bool minimum_normalized_ssm_valid
+float64 minimum_normalized_static_stability_margin
+
+bool minimum_stability_moment_valid
+float64 minimum_stability_moment_nm
+
+bool minimum_zmp_margin_valid
+float64 minimum_zmp_margin_m
