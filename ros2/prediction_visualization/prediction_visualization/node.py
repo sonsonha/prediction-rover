@@ -11,6 +11,7 @@ from visualization_msgs.msg import MarkerArray
 
 from safety_perception_msgs.msg import (
     DecisionEvidence,
+    DecisionOutput,
     GeometryArray,
     PredictionOutput,
     RoverState,
@@ -54,6 +55,7 @@ class PredictionVisualizationNode(Node):
         self._rover: RoverState | None = None
         self._predict: PredictionOutput | None = None
         self._decision_evidence: DecisionEvidence | None = None
+        self._decision_output: DecisionOutput | None = None
 
         qos = 10
         self.create_subscription(Trajectory, "/trajectory", self._on_traj, qos)
@@ -67,6 +69,9 @@ class PredictionVisualizationNode(Node):
         )
         self.create_subscription(
             DecisionEvidence, "/decision/evidence", self._on_decision_evidence, qos
+        )
+        self.create_subscription(
+            DecisionOutput, "/decision", self._on_decision_output, qos
         )
 
         self._pub_path = self.create_publisher(Path, "/prediction_viz/trajectory", qos)
@@ -195,6 +200,7 @@ class PredictionVisualizationNode(Node):
                 anchor_xy=anchor,
                 stamp=stamp,
                 decision_evidence=self._decision_evidence,
+                decision_output=self._decision_output,
             )
         )
 
@@ -264,6 +270,10 @@ class PredictionVisualizationNode(Node):
 
     def _on_decision_evidence(self, msg: DecisionEvidence) -> None:
         self._decision_evidence = msg
+        self._publish_status_layer(msg.header.stamp)
+
+    def _on_decision_output(self, msg: DecisionOutput) -> None:
+        self._decision_output = msg
         self._publish_status_layer(msg.header.stamp)
 
 

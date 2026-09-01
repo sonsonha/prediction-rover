@@ -550,6 +550,7 @@ def build_status_markers(
     anchor_xy: tuple[float, float] | None,
     stamp: Any | None = None,
     decision_evidence: Any | None = None,
+    decision_output: Any | None = None,
 ) -> MarkerArray:
     arr = MarkerArray()
     arr.markers.append(delete_all_marker("status", frame_id, stamp))
@@ -590,7 +591,21 @@ def build_status_markers(
         lines.append(f"Prediction Evidence: {ev_txt}")
         lines.append(f"Collision candidates: {col_txt}")
         lines.append(f"Dynamic SM: {sm_ev}  ZMP: {zmp_ev}")
-    if len(lines) == 1 and decision_evidence is None:
+    if decision_output is not None:
+        decision_txt = "GO" if int(decision_output.decision) == 0 else "STOP"
+        reason_map = {
+            0: "CURRENT_CLEAR",
+            1: "NO_CURRENT_PREDICTION",
+            2: "PREDICTION_STALE",
+            3: "COLLISION_CANDIDATE",
+            4: "ROLLOVER_EVIDENCE_INVALID",
+            5: "ROLLOVER_POLICY_TRIGGERED",
+        }
+        reason_txt = reason_map.get(int(decision_output.reason), "?")
+        lines.append("PROTOTYPE POLICY")
+        lines.append(f"Decision: {decision_txt}")
+        lines.append(f"Reason: {reason_txt}")
+    if len(lines) == 1 and decision_evidence is None and decision_output is None:
         return arr
     text = Marker()
     text.header = _header(frame_id, stamp)
@@ -601,7 +616,13 @@ def build_status_markers(
     text.pose.position = _point(ax, ay, 1.2)
     text.pose.orientation.w = 1.0
     text.scale.z = 0.22
-    text.color = _color(1.0, 1.0, 1.0, 0.95)
+    if decision_output is not None and int(decision_output.decision) == 1:
+        text.color = _color(1.0, 0.15, 0.15, 0.98)
+        text.scale.z = 0.28
+    elif decision_output is not None and int(decision_output.decision) == 0:
+        text.color = _color(0.2, 0.95, 0.35, 0.95)
+    else:
+        text.color = _color(1.0, 1.0, 1.0, 0.95)
     text.text = "\n".join(lines)
     arr.markers.append(text)
     return arr
