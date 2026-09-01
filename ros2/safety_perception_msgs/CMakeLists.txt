@@ -25,6 +25,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RolloverStep.msg"
   "msg/PredictionOutput.msg"
   "msg/DecisionEvidence.msg"
+  "msg/DecisionOutput.msg"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
 

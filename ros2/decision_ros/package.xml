@@ -3,7 +3,7 @@
 <package format="3">
   <name>decision_ros</name>
   <version>0.1.0</version>
-  <description>Policy-neutral Decision evidence aggregation (V0)</description>
+  <description>Decision evidence (V0) and prototype STOP/GO policy (V1)</description>
   <maintainer email="dev@example.com">Landfill Rover Team</maintainer>
   <license>Proprietary</license>
 
