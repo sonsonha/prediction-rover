@@ -159,9 +159,13 @@ docker run --rm --network host --ipc=host \
 | Dynamic fixture capture + replay | 46 / 47 | PASS | `prediction/logs/dynamic_fixture_20260831_230721/` |
 | Older bag dynamic replay | 45 | FAIL_INPUT_ALIGNMENT | `prediction/logs/dynamic_bag_replay_20260831_225636/` |
 | Prediction visualization fixture replay | 48 | PASS (topics) | `prediction/logs/prediction_viz_replay_20260831_domain48/` |
+| Decision V0 evidence fixture replay | 49 | PASS | `prediction/logs/decision_evidence_replay_20260901_013026/` |
+| Decision Prototype V1 STOP/GO fixture replay | 50 | PASS | `prediction/logs/decision_stop_go_replay_20260901_013843/` |
 
 Physical terrain/rollover correctness: **PENDING**.
-Decision: **NOT IMPLEMENTED**.
+Decision V0 (evidence-only): **IMPLEMENTED** on `/decision/evidence`.
+Decision Prototype V1 (STOP/GO): **IMPLEMENTED** on `/decision` (prototype only).
+Decision production policy / controller: **NOT IMPLEMENTED**.
 
 ## Prediction RViz visualization
 
@@ -195,3 +199,42 @@ docker run --rm --gpus all --network host --ipc=host \
 
 Config: `config/rviz/prediction_dynamic_debug.rviz` (Fixed Frame `map`; Image
 `/segmentation/overlay` Best Effort / Volatile).
+
+## Decision V0 evidence (fixture replay)
+
+Package: `ros2/decision_ros` — policy-neutral evidence aggregation only.
+Design: `docs/integration/DECISION_DESIGN.md` §15.
+
+Headless fixture check (Prediction dynamic + `decision_evidence` **before** bag play):
+
+```bash
+docker run --rm --network host --ipc=host \
+  -e ROS_DOMAIN_ID=49 \
+  -v /data/rover_workspace:/data/rover_workspace \
+  -v /data/rover_workspace/prediction/prediction-src:/workspace/prediction-src \
+  -w /workspace/prediction-src \
+  prediction-humble-dev:latest \
+  bash scripts/integration/run_decision_evidence_replay.sh
+```
+
+Publishes `/decision/evidence` only. Does **not** publish `/decision`,
+`/vehicle/command`, or `/stop`. No SAFE/STOP semantics.
+
+## Decision Prototype V1 STOP/GO (fixture replay)
+
+Prototype policy node: `decision_policy_node` — consumes `/decision/evidence`,
+publishes `/decision` only. **PROTOTYPE FAIL-SAFE:** UNKNOWN → STOP.
+**No controller connection.**
+
+```bash
+docker run --rm --network host --ipc=host \
+  -e ROS_DOMAIN_ID=50 \
+  -v /data/rover_workspace:/data/rover_workspace \
+  -v /data/rover_workspace/prediction/prediction-src:/workspace/prediction-src \
+  -w /workspace/prediction-src \
+  prediction-humble-dev:latest \
+  bash scripts/integration/run_decision_stop_go_replay.sh
+```
+
+Config: `ros2/decision_ros/config/decision_policy.yaml` (rollover policy **disabled**
+by default; no invented threshold).

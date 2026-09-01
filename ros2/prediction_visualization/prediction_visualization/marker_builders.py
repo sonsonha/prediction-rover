@@ -549,26 +549,64 @@ def build_status_markers(
     enabled: bool,
     anchor_xy: tuple[float, float] | None,
     stamp: Any | None = None,
+    decision_evidence: Any | None = None,
+    decision_output: Any | None = None,
 ) -> MarkerArray:
     arr = MarkerArray()
     arr.markers.append(delete_all_marker("status", frame_id, stamp))
-    if not enabled or prediction is None or matched_trajectory_id is None:
+    if not enabled or matched_trajectory_id is None or anchor_xy is None:
         return arr
-    if int(prediction.source_trajectory_id) != int(matched_trajectory_id):
+    ax, ay = anchor_xy
+    lines: list[str] = [f"traj {matched_trajectory_id}"]
+    pred_matches = (
+        prediction is not None
+        and int(prediction.source_trajectory_id) == int(matched_trajectory_id)
+    )
+    if pred_matches:
+        n_col = len(prediction.collision_steps)
+        n_roll = len(prediction.rollover_steps)
+        sm_txt = "N/A"
+        zmp_txt = "N/A"
+        if prediction.rollover_steps:
+            rs0 = prediction.rollover_steps[0]
+            sm = rs0.stability_moment
+            if bool(sm.valid) and finite(float(sm.minimum_stability_moment_nm)):
+                sm_txt = f"{float(sm.minimum_stability_moment_nm):.1f} Nm"
+            z = rs0.zmp
+            if bool(z.valid) and finite(float(z.margin_m)):
+                zmp_txt = f"m={float(z.margin_m):.3f}"
+        lines.append(f"collision_steps={n_col} rollover_steps={n_roll}")
+        lines.append(f"SM {sm_txt}  ZMP {zmp_txt}")
+    if decision_evidence is not None:
+        state_map = {0: "NONE", 1: "STALE", 2: "CURRENT"}
+        ev_txt = state_map.get(int(decision_evidence.evidence_state), "?")
+        if int(decision_evidence.evidence_state) == 2:
+            col_txt = "yes" if bool(decision_evidence.collision_candidates_present) else "no"
+            sm_ev = "valid" if bool(decision_evidence.dynamic_stability_moment_valid) else "N/A"
+            zmp_ev = "valid" if bool(decision_evidence.zmp_valid) else "N/A"
+        else:
+            col_txt = "N/A"
+            sm_ev = "N/A"
+            zmp_ev = "N/A"
+        lines.append(f"Prediction Evidence: {ev_txt}")
+        lines.append(f"Collision candidates: {col_txt}")
+        lines.append(f"Dynamic SM: {sm_ev}  ZMP: {zmp_ev}")
+    if decision_output is not None:
+        decision_txt = "GO" if int(decision_output.decision) == 0 else "STOP"
+        reason_map = {
+            0: "CURRENT_CLEAR",
+            1: "NO_CURRENT_PREDICTION",
+            2: "PREDICTION_STALE",
+            3: "COLLISION_CANDIDATE",
+            4: "ROLLOVER_EVIDENCE_INVALID",
+            5: "ROLLOVER_POLICY_TRIGGERED",
+        }
+        reason_txt = reason_map.get(int(decision_output.reason), "?")
+        lines.append("PROTOTYPE POLICY")
+        lines.append(f"Decision: {decision_txt}")
+        lines.append(f"Reason: {reason_txt}")
+    if len(lines) == 1 and decision_evidence is None and decision_output is None:
         return arr
-    ax, ay = anchor_xy if anchor_xy is not None else (0.0, 0.0)
-    n_col = len(prediction.collision_steps)
-    n_roll = len(prediction.rollover_steps)
-    sm_txt = "N/A"
-    zmp_txt = "N/A"
-    if prediction.rollover_steps:
-        rs0 = prediction.rollover_steps[0]
-        sm = rs0.stability_moment
-        if bool(sm.valid) and finite(float(sm.minimum_stability_moment_nm)):
-            sm_txt = f"{float(sm.minimum_stability_moment_nm):.1f} Nm"
-        z = rs0.zmp
-        if bool(z.valid) and finite(float(z.margin_m)):
-            zmp_txt = f"m={float(z.margin_m):.3f}"
     text = Marker()
     text.header = _header(frame_id, stamp)
     text.ns = "status"
@@ -578,12 +616,14 @@ def build_status_markers(
     text.pose.position = _point(ax, ay, 1.2)
     text.pose.orientation.w = 1.0
     text.scale.z = 0.22
-    text.color = _color(1.0, 1.0, 1.0, 0.95)
-    text.text = (
-        f"traj {matched_trajectory_id}\n"
-        f"collision_steps={n_col} rollover_steps={n_roll}\n"
-        f"SM {sm_txt}  ZMP {zmp_txt}"
-    )
+    if decision_output is not None and int(decision_output.decision) == 1:
+        text.color = _color(1.0, 0.15, 0.15, 0.98)
+        text.scale.z = 0.28
+    elif decision_output is not None and int(decision_output.decision) == 0:
+        text.color = _color(0.2, 0.95, 0.35, 0.95)
+    else:
+        text.color = _color(1.0, 1.0, 1.0, 0.95)
+    text.text = "\n".join(lines)
     arr.markers.append(text)
     return arr
 

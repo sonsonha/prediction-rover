@@ -3,8 +3,9 @@
 Design / requirements audit for a downstream **Decision** layer on the Landfill
 Rover Safety Prediction system.
 
-**Status:** DESIGN ONLY — **not implemented**.  
+**Status:** **Decision V0 IMPLEMENTED** (evidence-only). **Decision V1 NOT IMPLEMENTED** (no safety policy).  
 **Repository HEAD audited:** `integration/humble-real-pipeline` @ `5a06906`  
+**Decision V0 branch:** `feature/decision-evidence-v0`  
 **Scope:** audit existing Prediction evidence and gaps; **no** physics, runtime,
 adapter, message, or threshold changes in this milestone.
 
@@ -71,7 +72,7 @@ Validated today (integration branch):
 | Prediction RViz visualization | IMPLEMENTED + replay validated |
 | Physical terrain correctness | PENDING |
 | Physical rollover correctness | PENDING |
-| **Decision** | **NOT IMPLEMENTED** |
+| **Decision** | **V0 IMPLEMENTED** (evidence-only on `/decision/evidence`) · **V1 NOT IMPLEMENTED** (no SAFE/STOP policy) |
 
 Sources: `docs/integration/VALIDATION_STATUS.md`, `README.md`,
 `documents/PREDICTION_PYTHON_V1.md`, `documents/ROS_UPSTREAM_INTERFACE_CONTRACT.md`.
@@ -629,6 +630,139 @@ Replay fixture reference: `session_0924_dynamic_prediction_inputs` (IDs **1**, *
 8. **Controller interface** — only after explicit safety review.
 
 **Do not start steps 2–8 until step 1 produces written requirements.**
+
+---
+
+## 15. Decision V0 Implementation (evidence-only)
+
+**Branch:** `feature/decision-evidence-v0`  
+**Package:** `ros2/decision_ros`  
+**Message:** `safety_perception_msgs/msg/DecisionEvidence.msg`  
+**Topic:** `/decision/evidence` (only — no `/decision`, `/vehicle/command`, `/stop`)
+
+### 15.1 `DecisionEvidence` fields
+
+```text
+std_msgs/Header header
+string source_trajectory_id
+uint8 evidence_state          # NO_PREDICTION=0, PREDICTION_STALE=1, PREDICTION_CURRENT=2
+bool collision_candidates_present
+bool rollover_baseline_present
+bool dynamic_stability_moment_valid
+bool zmp_valid
+bool nearest_collision_distance_valid
+float64 nearest_collision_distance_m
+bool minimum_normalized_ssm_valid
+float64 minimum_normalized_static_stability_margin
+bool minimum_stability_moment_valid
+float64 minimum_stability_moment_nm
+bool minimum_zmp_margin_valid
+float64 minimum_zmp_margin_m
+```
+
+### 15.2 `evidence_state` semantics
+
+| Constant | Value | Meaning |
+|----------|------:|---------|
+| `NO_PREDICTION` | 0 | Active trajectory has no matching `PredictionOutput` yet |
+| `PREDICTION_STALE` | 1 | Latest `PredictionOutput.source_trajectory_id` ≠ active `trajectory_id` |
+| `PREDICTION_CURRENT` | 2 | `PredictionOutput` matches active trajectory |
+
+When state is not `PREDICTION_CURRENT`, evidence flags and aggregates are cleared
+(not interpreted as safe/unknown risk).
+
+### 15.3 Inputs / non-goals
+
+- Subscribes: `/trajectory`, `/predict_output` only
+- Does **not** subscribe to `/tracked_objects`, `/geometry`, `/rover/state`
+- Does **not** re-run Prediction physics
+- Does **not** assign SAFE / WARNING / STOP / controller commands
+
+### 15.4 Decision V1 production policy (future)
+
+Requires approved product/safety requirements (§11–§12): discrete states, collision
+and rollover thresholds, horizon policy, collision–rollover priority, controller
+interface. **Not implemented** as production safety policy.
+
+### 15.5 Controller integration
+
+**Not implemented.** Decision V0 publishes evidence only.
+
+---
+
+## 16. Decision Prototype V1 (STOP/GO)
+
+**Branch:** `feature/decision-stop-go-v1`  
+**Message:** `safety_perception_msgs/msg/DecisionOutput.msg`  
+**Topic:** `/decision` (prototype policy output only — **no controller connection**)
+
+### 16.1 Architecture
+
+```text
+Prediction → /predict_output → DecisionEvidence (V0) → /decision/evidence
+                                                      ↓
+                                            DecisionPolicy V1 → /decision
+```
+
+Decision V0 semantics remain unchanged. Policy consumes `/decision/evidence` only.
+
+### 16.2 `DecisionOutput` fields
+
+```text
+std_msgs/Header header
+string source_trajectory_id
+uint8 decision                 # GO=0, STOP=1
+uint8 reason
+  # CURRENT_CLEAR=0
+  # NO_CURRENT_PREDICTION=1
+  # PREDICTION_STALE=2
+  # COLLISION_CANDIDATE=3
+  # ROLLOVER_EVIDENCE_INVALID=4
+  # ROLLOVER_POLICY_TRIGGERED=5
+bool prototype_policy
+```
+
+### 16.3 PROTOTYPE FAIL-SAFE ASSUMPTION
+
+V1 allows only **GO** and **STOP**. **UNKNOWN / unavailable evidence maps to STOP.**
+
+This is a **prototype integration/demo policy**, not approved production safety logic.
+
+### 16.4 Prototype STOP/GO rules (deterministic)
+
+1. `evidence_state != PREDICTION_CURRENT` → **STOP**
+2. `collision_candidates_present == true` → **STOP** (proximity **candidates**, not confirmed impact)
+3. Rollover policy enabled but required evidence unavailable → **STOP**
+4. Rollover policy enabled and configured threshold triggered → **STOP**
+5. Otherwise → **GO**
+
+### 16.5 Rollover policy status
+
+Default config (`ros2/decision_ros/config/decision_policy.yaml`):
+
+```yaml
+decision_policy:
+  prototype_only: true
+  stop_on_collision_candidate: true
+  stop_on_missing_current_prediction: true
+  rollover_policy:
+    enabled: false
+    metric: stability_moment
+    # threshold: unset (NaN)
+```
+
+**Rollover STOP thresholds are NOT approved.** Default rollover policy is **disabled**.
+No threshold is silently invented (e.g. `0`). Enabling rollover without a valid finite
+threshold fails safe to **STOP** (`ROLLOVER_EVIDENCE_INVALID`).
+
+V1 currently validates Decision plumbing and **collision prototype policy only**.
+
+### 16.6 Non-goals (unchanged)
+
+- No connection to vehicle controller
+- No Prediction physics changes
+- No WARNING / SLOW / DANGER states
+- Physical terrain/rollover validation **PENDING**
 
 ---
 

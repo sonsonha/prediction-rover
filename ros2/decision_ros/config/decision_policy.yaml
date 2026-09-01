@@ -1,0 +1,8 @@
+decision_policy:
+  ros__parameters:
+    decision_policy.prototype_only: true
+    decision_policy.stop_on_collision_candidate: true
+    decision_policy.stop_on_missing_current_prediction: true
+    decision_policy.rollover_policy.enabled: false
+    decision_policy.rollover_policy.metric: stability_moment
+    decision_policy.rollover_policy.threshold: .nan
