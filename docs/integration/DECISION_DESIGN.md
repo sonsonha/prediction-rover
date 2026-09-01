@@ -3,8 +3,9 @@
 Design / requirements audit for a downstream **Decision** layer on the Landfill
 Rover Safety Prediction system.
 
-**Status:** DESIGN ONLY — **not implemented**.  
+**Status:** **Decision V0 IMPLEMENTED** (evidence-only). **Decision V1 NOT IMPLEMENTED** (no safety policy).  
 **Repository HEAD audited:** `integration/humble-real-pipeline` @ `5a06906`  
+**Decision V0 branch:** `feature/decision-evidence-v0`  
 **Scope:** audit existing Prediction evidence and gaps; **no** physics, runtime,
 adapter, message, or threshold changes in this milestone.
 
@@ -71,7 +72,7 @@ Validated today (integration branch):
 | Prediction RViz visualization | IMPLEMENTED + replay validated |
 | Physical terrain correctness | PENDING |
 | Physical rollover correctness | PENDING |
-| **Decision** | **NOT IMPLEMENTED** |
+| **Decision** | **V0 IMPLEMENTED** (evidence-only on `/decision/evidence`) · **V1 NOT IMPLEMENTED** (no SAFE/STOP policy) |
 
 Sources: `docs/integration/VALIDATION_STATUS.md`, `README.md`,
 `documents/PREDICTION_PYTHON_V1.md`, `documents/ROS_UPSTREAM_INTERFACE_CONTRACT.md`.
@@ -629,6 +630,63 @@ Replay fixture reference: `session_0924_dynamic_prediction_inputs` (IDs **1**, *
 8. **Controller interface** — only after explicit safety review.
 
 **Do not start steps 2–8 until step 1 produces written requirements.**
+
+---
+
+## 15. Decision V0 Implementation (evidence-only)
+
+**Branch:** `feature/decision-evidence-v0`  
+**Package:** `ros2/decision_ros`  
+**Message:** `safety_perception_msgs/msg/DecisionEvidence.msg`  
+**Topic:** `/decision/evidence` (only — no `/decision`, `/vehicle/command`, `/stop`)
+
+### 15.1 `DecisionEvidence` fields
+
+```text
+std_msgs/Header header
+string source_trajectory_id
+uint8 evidence_state          # NO_PREDICTION=0, PREDICTION_STALE=1, PREDICTION_CURRENT=2
+bool collision_candidates_present
+bool rollover_baseline_present
+bool dynamic_stability_moment_valid
+bool zmp_valid
+bool nearest_collision_distance_valid
+float64 nearest_collision_distance_m
+bool minimum_normalized_ssm_valid
+float64 minimum_normalized_static_stability_margin
+bool minimum_stability_moment_valid
+float64 minimum_stability_moment_nm
+bool minimum_zmp_margin_valid
+float64 minimum_zmp_margin_m
+```
+
+### 15.2 `evidence_state` semantics
+
+| Constant | Value | Meaning |
+|----------|------:|---------|
+| `NO_PREDICTION` | 0 | Active trajectory has no matching `PredictionOutput` yet |
+| `PREDICTION_STALE` | 1 | Latest `PredictionOutput.source_trajectory_id` ≠ active `trajectory_id` |
+| `PREDICTION_CURRENT` | 2 | `PredictionOutput` matches active trajectory |
+
+When state is not `PREDICTION_CURRENT`, evidence flags and aggregates are cleared
+(not interpreted as safe/unknown risk).
+
+### 15.3 Inputs / non-goals
+
+- Subscribes: `/trajectory`, `/predict_output` only
+- Does **not** subscribe to `/tracked_objects`, `/geometry`, `/rover/state`
+- Does **not** re-run Prediction physics
+- Does **not** assign SAFE / WARNING / STOP / controller commands
+
+### 15.4 Decision V1 (future)
+
+Requires approved product/safety requirements (§11–§12): discrete states, collision
+and rollover thresholds, horizon policy, collision–rollover priority, controller
+interface. **Not implemented.**
+
+### 15.5 Controller integration
+
+**Not implemented.** Decision V0 publishes evidence only.
 
 ---
 
