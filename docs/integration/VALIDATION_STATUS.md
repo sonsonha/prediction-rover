@@ -31,6 +31,7 @@ physical model correctness is not.
 | Prediction RViz visualization (fixture replay topics) | IMPLEMENTED / topic-validated on domain 48 — `prediction_viz_replay_20260831_domain48` (predict IDs 1, 11; all `/prediction_viz/*` published) |
 | Decision V0 evidence (fixture replay) | IMPLEMENTED / validated on domain 49 — `decision_evidence_replay_20260901_013026` (predict IDs 1, 11 → `PREDICTION_CURRENT`; staleness on trajectory advance) |
 | Decision Prototype V1 STOP/GO (fixture replay) | IMPLEMENTED / validated on domain 50 — `decision_stop_go_replay_20260901_013843` (GO for traj IDs 1, 11; STOP on advance/stale) |
+| Decision Prototype V1 live E2E (concurrent full stack) | PASS on domain 51 — `decision_live_e2e_20260901_084141` (predict IDs 7, 12; 121 transitions; 2 GO / 119 STOP; CURRENT→GO correct; stale→STOP correct) |
 | Canonical 4-topic input bag creation | `bags/session_0924_pipe_prediction_inputs` (static/upstream input bag; see note below) |
 | Persistent whole-stack restart at SVO EOF | `rviz_demo_20260831_075329` lap 1→2 |
 | Existing bridge helper tests | `lr_prediction_bridge` helper unit tests pass |
@@ -84,9 +85,15 @@ fixture. See `dynamic_bag_replay_20260831_225636` (`FAIL_INPUT_ALIGNMENT`).
 fixture (`session_0924_dynamic_prediction_inputs`) · real acceleration consumed ·
 Stability Moment diagnostics valid · ZMP diagnostics valid · Prediction RViz
 visualization topics (fixture replay) · **Decision V0 evidence** (fixture replay) ·
-**Decision Prototype V1 STOP/GO** (fixture replay)
+**Decision Prototype V1 STOP/GO** (fixture replay) · **Decision Prototype V1 live E2E**
 
 **PARTIAL / PENDING:** physical terrain normal correctness · physical rollover
 model validation · final customer RViz visualization · **Decision production safety policy**
 
 **NOT IMPLEMENTED:** production Decision policy approval · controller integration
+
+**PROTOTYPE ONLY — NOT APPROVED FOR VEHICLE CONTROL.** Live E2E (`decision_live_e2e_20260901_084141`):
+121 decision transitions, 2 GO, 119 STOP (112 `PREDICTION_STALE`). GO windows are brief
+because trajectory IDs advance faster than Prediction output cadence (~98% STOP transitions).
+Fail-safe stale→STOP behavior is intentional; not suitable for direct vehicle control without
+approved policy redesign, rollover thresholds, and controller interface.

@@ -764,6 +764,36 @@ V1 currently validates Decision plumbing and **collision prototype policy only**
 - No WARNING / SLOW / DANGER states
 - Physical terrain/rollover validation **PENDING**
 
+### 16.7 Live E2E validation (integration/demo only)
+
+**Evidence:** `prediction/logs/decision_live_e2e_20260901_084141/`  
+**ROS_DOMAIN_ID:** 51 · concurrent full stack · **Result: PASS**
+
+| Metric | Value |
+|--------|------:|
+| PredictionOutput IDs | 7, 12 |
+| Decision transitions | 121 |
+| GO | 2 |
+| STOP | 119 |
+| STOP `PREDICTION_STALE` | 112 |
+| STOP `NO_CURRENT_PREDICTION` | 7 |
+
+CURRENT evidence → GO / `CURRENT_CLEAR` for both live predictions (no collision
+candidates; rollover policy disabled). Stale/no-prediction → STOP with correct reasons.
+No contradictory decisions; no application-node crashes. Visualization subscribes to
+`/decision`.
+
+**PROTOTYPE ONLY — NOT APPROVED FOR VEHICLE CONTROL.**
+
+Reasons:
+
+- Fail-safe stale → STOP causes near-continuous STOP when trajectory cadence exceeds
+  Prediction cadence (~98% STOP transitions; GO windows brief)
+- No approved rollover threshold (rollover policy disabled)
+- Collision candidate → STOP remains provisional (proximity candidates, not confirmed impact)
+- Physical terrain/rollover correctness **PENDING**
+- No controller interface (`/decision` is not connected to vehicle commands)
+
 ---
 
 ## References

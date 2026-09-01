@@ -64,8 +64,12 @@ integration exactly.
 | Dynamic Prediction live E2E | PASS | `prediction/logs/dynamic_e2e_concurrent_20260831_225025/` |
 | Dynamic fixture capture + replay | PASS | `prediction/logs/dynamic_fixture_20260831_230721/` |
 | Dynamic replay fixture bag | PASS | `prediction/bags/session_0924_dynamic_prediction_inputs` (traj 16 / objects 4 / geom 13 / state 27; output IDs 1, 11) |
+| Decision V0 evidence (fixture replay) | PASS | `prediction/logs/decision_evidence_replay_20260901_013026/` (domain 49) |
+| Decision Prototype V1 STOP/GO (fixture replay) | PASS | `prediction/logs/decision_stop_go_replay_20260901_013843/` (domain 50) |
+| Decision Prototype V1 live E2E | PASS | `prediction/logs/decision_live_e2e_20260901_084141/` (domain 51; predict IDs 7, 12; 121 transitions; **PROTOTYPE ONLY**) |
 | Older bag as dynamic replay | FAIL_INPUT_ALIGNMENT | `prediction/logs/dynamic_bag_replay_20260831_225636/` + `session_0924_pipe_prediction_inputs` |
 | Physical terrain/rollover correctness | PENDING | — |
+| Decision production policy / vehicle control | NOT IMPLEMENTED | Prototype STOP/GO only; **NOT APPROVED FOR VEHICLE CONTROL** |
 
 ## Local-only (not in Git)
 

@@ -161,11 +161,12 @@ docker run --rm --network host --ipc=host \
 | Prediction visualization fixture replay | 48 | PASS (topics) | `prediction/logs/prediction_viz_replay_20260831_domain48/` |
 | Decision V0 evidence fixture replay | 49 | PASS | `prediction/logs/decision_evidence_replay_20260901_013026/` |
 | Decision Prototype V1 STOP/GO fixture replay | 50 | PASS | `prediction/logs/decision_stop_go_replay_20260901_013843/` |
+| Decision Prototype V1 live E2E (concurrent) | 51 | PASS | `prediction/logs/decision_live_e2e_20260901_084141/` |
 
 Physical terrain/rollover correctness: **PENDING**.
-Decision V0 (evidence-only): **IMPLEMENTED** on `/decision/evidence`.
-Decision Prototype V1 (STOP/GO): **IMPLEMENTED** on `/decision` (prototype only).
-Decision production policy / controller: **NOT IMPLEMENTED**.
+Decision V0 (evidence-only): **IMPLEMENTED** on `/decision/evidence` — fixture + live PASS.
+Decision Prototype V1 (STOP/GO): **IMPLEMENTED** on `/decision` — fixture + live PASS (**PROTOTYPE ONLY**).
+Decision production policy / controller: **NOT IMPLEMENTED** — **NOT APPROVED FOR VEHICLE CONTROL**.
 
 ## Prediction RViz visualization
 
@@ -238,3 +239,14 @@ docker run --rm --network host --ipc=host \
 
 Config: `ros2/decision_ros/config/decision_policy.yaml` (rollover policy **disabled**
 by default; no invented threshold).
+
+## Decision Prototype V1 live E2E (validated)
+
+Concurrent full stack on isolated domain 51 (SVO + MAVLink + adapters + Prediction
+dynamic + DecisionEvidence + DecisionPolicy + visualization). Evidence:
+`prediction/logs/decision_live_e2e_20260901_084141/`.
+
+**PROTOTYPE ONLY — NOT APPROVED FOR VEHICLE CONTROL.** Observed: 121 decision
+transitions, 2 GO, 119 STOP (112 `PREDICTION_STALE`). GO windows are brief because
+trajectory cadence exceeds Prediction output cadence. No `/decision` controller
+connection.
