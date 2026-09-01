@@ -30,6 +30,7 @@ physical model correctness is not.
 | Dynamic replay fixture | `session_0924_dynamic_prediction_inputs` — replay PASS in `dynamic_fixture_20260831_230721` (outputs for trajectory IDs 1, 11) |
 | Prediction RViz visualization (fixture replay topics) | IMPLEMENTED / topic-validated on domain 48 — `prediction_viz_replay_20260831_domain48` (predict IDs 1, 11; all `/prediction_viz/*` published) |
 | Decision V0 evidence (fixture replay) | IMPLEMENTED / validated on domain 49 — `decision_evidence_replay_20260901_013026` (predict IDs 1, 11 → `PREDICTION_CURRENT`; staleness on trajectory advance) |
+| Decision Prototype V1 STOP/GO (fixture replay) | IMPLEMENTED / validated on domain 50 — `decision_stop_go_replay_20260901_013843` (GO for traj IDs 1, 11; STOP on advance/stale) |
 | Canonical 4-topic input bag creation | `bags/session_0924_pipe_prediction_inputs` (static/upstream input bag; see note below) |
 | Persistent whole-stack restart at SVO EOF | `rviz_demo_20260831_075329` lap 1→2 |
 | Existing bridge helper tests | `lr_prediction_bridge` helper unit tests pass |
@@ -74,7 +75,7 @@ fixture. See `dynamic_bag_replay_20260831_225636` (`FAIL_INPUT_ALIGNMENT`).
 | Physical rollover model validation | SM/ZMP diagnostic flags valid on dynamic path; physical rollover correctness PENDING |
 | Static canonical bag replay | `bag_replay_20260831_042521`: output produced, zero duplicate IDs; formal `success: false` |
 | Final customer RViz visualization | Prediction viz package + `prediction_dynamic_debug.rviz` implemented; not a customer product UI |
-| Decision V1 (safety policy) | Not implemented — no SAFE/STOP/thresholds/controller |
+| Decision V1 production safety policy | Not implemented — prototype STOP/GO only; no controller |
 | Formal RViz behavior across SVO clock reset | Viewer runs in Docker; lap-boundary flicker/recovery not formally signed off |
 
 ## Status summary
@@ -82,9 +83,10 @@ fixture. See `dynamic_bag_replay_20260831_225636` (`FAIL_INPUT_ALIGNMENT`).
 **PASS:** static Prediction live · dynamic Prediction live E2E · dynamic replay
 fixture (`session_0924_dynamic_prediction_inputs`) · real acceleration consumed ·
 Stability Moment diagnostics valid · ZMP diagnostics valid · Prediction RViz
-visualization topics (fixture replay) · **Decision V0 evidence** (fixture replay)
+visualization topics (fixture replay) · **Decision V0 evidence** (fixture replay) ·
+**Decision Prototype V1 STOP/GO** (fixture replay)
 
 **PARTIAL / PENDING:** physical terrain normal correctness · physical rollover
-model validation · final customer RViz visualization · **Decision V1 safety policy**
+model validation · final customer RViz visualization · **Decision production safety policy**
 
-**NOT IMPLEMENTED:** Decision V1 (SAFE/STOP/thresholds/controller integration)
+**NOT IMPLEMENTED:** production Decision policy approval · controller integration

@@ -678,15 +678,91 @@ When state is not `PREDICTION_CURRENT`, evidence flags and aggregates are cleare
 - Does **not** re-run Prediction physics
 - Does **not** assign SAFE / WARNING / STOP / controller commands
 
-### 15.4 Decision V1 (future)
+### 15.4 Decision V1 production policy (future)
 
 Requires approved product/safety requirements (§11–§12): discrete states, collision
 and rollover thresholds, horizon policy, collision–rollover priority, controller
-interface. **Not implemented.**
+interface. **Not implemented** as production safety policy.
 
 ### 15.5 Controller integration
 
 **Not implemented.** Decision V0 publishes evidence only.
+
+---
+
+## 16. Decision Prototype V1 (STOP/GO)
+
+**Branch:** `feature/decision-stop-go-v1`  
+**Message:** `safety_perception_msgs/msg/DecisionOutput.msg`  
+**Topic:** `/decision` (prototype policy output only — **no controller connection**)
+
+### 16.1 Architecture
+
+```text
+Prediction → /predict_output → DecisionEvidence (V0) → /decision/evidence
+                                                      ↓
+                                            DecisionPolicy V1 → /decision
+```
+
+Decision V0 semantics remain unchanged. Policy consumes `/decision/evidence` only.
+
+### 16.2 `DecisionOutput` fields
+
+```text
+std_msgs/Header header
+string source_trajectory_id
+uint8 decision                 # GO=0, STOP=1
+uint8 reason
+  # CURRENT_CLEAR=0
+  # NO_CURRENT_PREDICTION=1
+  # PREDICTION_STALE=2
+  # COLLISION_CANDIDATE=3
+  # ROLLOVER_EVIDENCE_INVALID=4
+  # ROLLOVER_POLICY_TRIGGERED=5
+bool prototype_policy
+```
+
+### 16.3 PROTOTYPE FAIL-SAFE ASSUMPTION
+
+V1 allows only **GO** and **STOP**. **UNKNOWN / unavailable evidence maps to STOP.**
+
+This is a **prototype integration/demo policy**, not approved production safety logic.
+
+### 16.4 Prototype STOP/GO rules (deterministic)
+
+1. `evidence_state != PREDICTION_CURRENT` → **STOP**
+2. `collision_candidates_present == true` → **STOP** (proximity **candidates**, not confirmed impact)
+3. Rollover policy enabled but required evidence unavailable → **STOP**
+4. Rollover policy enabled and configured threshold triggered → **STOP**
+5. Otherwise → **GO**
+
+### 16.5 Rollover policy status
+
+Default config (`ros2/decision_ros/config/decision_policy.yaml`):
+
+```yaml
+decision_policy:
+  prototype_only: true
+  stop_on_collision_candidate: true
+  stop_on_missing_current_prediction: true
+  rollover_policy:
+    enabled: false
+    metric: stability_moment
+    # threshold: unset (NaN)
+```
+
+**Rollover STOP thresholds are NOT approved.** Default rollover policy is **disabled**.
+No threshold is silently invented (e.g. `0`). Enabling rollover without a valid finite
+threshold fails safe to **STOP** (`ROLLOVER_EVIDENCE_INVALID`).
+
+V1 currently validates Decision plumbing and **collision prototype policy only**.
+
+### 16.6 Non-goals (unchanged)
+
+- No connection to vehicle controller
+- No Prediction physics changes
+- No WARNING / SLOW / DANGER states
+- Physical terrain/rollover validation **PENDING**
 
 ---
 
